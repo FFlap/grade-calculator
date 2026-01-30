@@ -129,15 +129,25 @@ export function GradeCalculator({
               type="single"
               value={gradeType}
               onValueChange={handleGradeTypeChange}
-              className="justify-start"
+              spacing={1}
+              className="bg-gray-100 p-1 rounded-xl inline-flex justify-start"
             >
-              <ToggleGroupItem value="percentage" className="px-4">
+              <ToggleGroupItem
+                value="percentage"
+                className="px-6 py-2 rounded-md text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+              >
                 Percentage
               </ToggleGroupItem>
-              <ToggleGroupItem value="letters" className="px-4">
+              <ToggleGroupItem
+                value="letters"
+                className="px-6 py-2 rounded-md text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+              >
                 Letters
               </ToggleGroupItem>
-              <ToggleGroupItem value="points" className="px-4">
+              <ToggleGroupItem
+                value="points"
+                className="px-6 py-2 rounded-md text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+              >
                 Points
               </ToggleGroupItem>
             </ToggleGroup>
@@ -184,7 +194,7 @@ export function GradeCalculator({
                   type="number"
                   value={targetGrade}
                   onChange={(e) => setTargetGrade(e.target.value)}
-                  className="w-20 text-center"
+                  className="w-20 text-center border-border"
                 />
                 <span className="text-sm text-muted-foreground">%</span>
               </div>
@@ -198,14 +208,25 @@ export function GradeCalculator({
                 type="single"
                 value={String(decimalPlaces)}
                 onValueChange={(v) => v && setDecimalPlaces(Number(v) as 0 | 1 | 2)}
+                spacing={1}
+                className="bg-gray-100 p-1 rounded-xl inline-flex"
               >
-                <ToggleGroupItem value="0" className="w-10">
+                <ToggleGroupItem
+                  value="0"
+                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+                >
                   0
                 </ToggleGroupItem>
-                <ToggleGroupItem value="1" className="w-10">
+                <ToggleGroupItem
+                  value="1"
+                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+                >
                   1
                 </ToggleGroupItem>
-                <ToggleGroupItem value="2" className="w-10">
+                <ToggleGroupItem
+                  value="2"
+                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+                >
                   2
                 </ToggleGroupItem>
               </ToggleGroup>

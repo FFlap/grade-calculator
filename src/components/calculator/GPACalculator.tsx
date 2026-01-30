@@ -204,7 +204,7 @@ export function GPACalculator() {
             variant="outline"
             size="sm"
             onClick={handleAddCourse}
-            className="w-full border-dashed border-border hover:border-primary hover:text-primary"
+            className="w-full border-dashed border-border hover:border-primary hover:text-primary hover:bg-primary/5"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add course

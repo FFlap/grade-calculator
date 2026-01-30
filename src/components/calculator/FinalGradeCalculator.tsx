@@ -73,7 +73,7 @@ export function FinalGradeCalculator() {
                   placeholder="85"
                   value={currentGrade}
                   onChange={(e) => setCurrentGrade(e.target.value)}
-                  className="pr-8"
+                  className="pr-8 border-border"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                   %
@@ -92,7 +92,7 @@ export function FinalGradeCalculator() {
                   placeholder="30"
                   value={finalWeight}
                   onChange={(e) => setFinalWeight(e.target.value)}
-                  className="pr-8"
+                  className="pr-8 border-border"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                   %
@@ -111,7 +111,7 @@ export function FinalGradeCalculator() {
                   placeholder="80"
                   value={targetGrade}
                   onChange={(e) => setTargetGrade(e.target.value)}
-                  className="pr-8"
+                  className="pr-8 border-border"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                   %
