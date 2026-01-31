@@ -22,6 +22,14 @@ export default defineSchema({
   courses: defineTable({
     userId: v.string(),
     name: v.string(),
+    letterGradeThresholds: v.optional(
+      v.array(
+        v.object({
+          min: v.number(),
+          letter: v.string(),
+        })
+      )
+    ),
     createdAt: v.number(),
   }).index('by_user', ['userId']),
 })

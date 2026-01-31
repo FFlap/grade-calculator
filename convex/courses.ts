@@ -33,6 +33,39 @@ export const add = mutation({
   },
 })
 
+export const updateName = mutation({
+  args: { id: v.id('courses'), name: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) {
+      throw new Error('Not authenticated')
+    }
+    const course = await ctx.db.get(args.id)
+    if (!course || course.userId !== identity.subject) {
+      throw new Error('Course not found')
+    }
+    return await ctx.db.patch(args.id, { name: args.name })
+  },
+})
+
+export const updateLetterGradeThresholds = mutation({
+  args: {
+    id: v.id('courses'),
+    thresholds: v.array(v.object({ min: v.number(), letter: v.string() })),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) {
+      throw new Error('Not authenticated')
+    }
+    const course = await ctx.db.get(args.id)
+    if (!course || course.userId !== identity.subject) {
+      throw new Error('Course not found')
+    }
+    return await ctx.db.patch(args.id, { letterGradeThresholds: args.thresholds })
+  },
+})
+
 export const remove = mutation({
   args: { id: v.id('courses') },
   handler: async (ctx, args) => {
@@ -44,6 +77,18 @@ export const remove = mutation({
     if (!course || course.userId !== identity.subject) {
       throw new Error('Course not found')
     }
+
+    // Cascade delete: remove grades linked to this course for the current user.
+    const grades = await ctx.db
+      .query('grades')
+      .withIndex('by_course', (q) => q.eq('courseId', args.id))
+      .collect()
+    for (const grade of grades) {
+      if (grade.userId === identity.subject) {
+        await ctx.db.delete(grade._id)
+      }
+    }
+
     return await ctx.db.delete(args.id)
   },
 })

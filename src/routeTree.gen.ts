@@ -9,38 +9,108 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as GpaCalculatorRouteImport } from './routes/gpa-calculator'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GradeCalculatorIndexRouteImport } from './routes/grade-calculator/index'
+import { Route as GradeCalculatorCourseIdRouteImport } from './routes/grade-calculator/$courseId'
 
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GpaCalculatorRoute = GpaCalculatorRouteImport.update({
+  id: '/gpa-calculator',
+  path: '/gpa-calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GradeCalculatorIndexRoute = GradeCalculatorIndexRouteImport.update({
+  id: '/grade-calculator/',
+  path: '/grade-calculator/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GradeCalculatorCourseIdRoute = GradeCalculatorCourseIdRouteImport.update({
+  id: '/grade-calculator/$courseId',
+  path: '/grade-calculator/$courseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/gpa-calculator': typeof GpaCalculatorRoute
+  '/profile': typeof ProfileRoute
+  '/grade-calculator/$courseId': typeof GradeCalculatorCourseIdRoute
+  '/grade-calculator/': typeof GradeCalculatorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/gpa-calculator': typeof GpaCalculatorRoute
+  '/profile': typeof ProfileRoute
+  '/grade-calculator/$courseId': typeof GradeCalculatorCourseIdRoute
+  '/grade-calculator': typeof GradeCalculatorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/gpa-calculator': typeof GpaCalculatorRoute
+  '/profile': typeof ProfileRoute
+  '/grade-calculator/$courseId': typeof GradeCalculatorCourseIdRoute
+  '/grade-calculator/': typeof GradeCalculatorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/gpa-calculator'
+    | '/profile'
+    | '/grade-calculator/$courseId'
+    | '/grade-calculator/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/gpa-calculator'
+    | '/profile'
+    | '/grade-calculator/$courseId'
+    | '/grade-calculator'
+  id:
+    | '__root__'
+    | '/'
+    | '/gpa-calculator'
+    | '/profile'
+    | '/grade-calculator/$courseId'
+    | '/grade-calculator/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GpaCalculatorRoute: typeof GpaCalculatorRoute
+  ProfileRoute: typeof ProfileRoute
+  GradeCalculatorCourseIdRoute: typeof GradeCalculatorCourseIdRoute
+  GradeCalculatorIndexRoute: typeof GradeCalculatorIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gpa-calculator': {
+      id: '/gpa-calculator'
+      path: '/gpa-calculator'
+      fullPath: '/gpa-calculator'
+      preLoaderRoute: typeof GpaCalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +118,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/grade-calculator/': {
+      id: '/grade-calculator/'
+      path: '/grade-calculator'
+      fullPath: '/grade-calculator/'
+      preLoaderRoute: typeof GradeCalculatorIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/grade-calculator/$courseId': {
+      id: '/grade-calculator/$courseId'
+      path: '/grade-calculator/$courseId'
+      fullPath: '/grade-calculator/$courseId'
+      preLoaderRoute: typeof GradeCalculatorCourseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GpaCalculatorRoute: GpaCalculatorRoute,
+  ProfileRoute: ProfileRoute,
+  GradeCalculatorCourseIdRoute: GradeCalculatorCourseIdRoute,
+  GradeCalculatorIndexRoute: GradeCalculatorIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -8,14 +8,17 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Check } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Plus, Check, Pencil, Trash2, X } from 'lucide-react'
 import type { Course } from './types'
 
 interface CourseSelectorProps {
   courses: Course[]
-  selectedCourseId: string | null
-  onSelectCourse: (courseId: string | null) => void
-  onCreateCourse: (name: string) => void
+  selectedCourseId: Course['_id'] | null
+  onSelectCourse: (courseId: Course['_id'] | null) => void
+  onCreateCourse: (name: string) => void | Promise<void>
+  onRenameCourse?: (courseId: Course['_id'], name: string) => void | Promise<void>
+  onDeleteCourse?: (courseId: Course['_id']) => void | Promise<void>
 }
 
 export function CourseSelector({
@@ -23,15 +26,61 @@ export function CourseSelector({
   selectedCourseId,
   onSelectCourse,
   onCreateCourse,
+  onRenameCourse,
+  onDeleteCourse,
 }: CourseSelectorProps) {
   const [isCreating, setIsCreating] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [newCourseName, setNewCourseName] = useState('')
+  const [editedCourseName, setEditedCourseName] = useState('')
+  const [isWorking, setIsWorking] = useState(false)
 
-  const handleCreateCourse = () => {
-    if (newCourseName.trim()) {
-      onCreateCourse(newCourseName.trim())
+  const selectedCourse =
+    selectedCourseId ? courses.find((c) => c._id === selectedCourseId) : null
+
+  const handleCreateCourse = async () => {
+    const name = newCourseName.trim()
+    if (!name) return
+
+    try {
+      setIsWorking(true)
+      await onCreateCourse(name)
       setNewCourseName('')
       setIsCreating(false)
+    } finally {
+      setIsWorking(false)
+    }
+  }
+
+  const handleRenameCourse = async () => {
+    const name = editedCourseName.trim()
+    if (!selectedCourseId || !name || !onRenameCourse) return
+
+    try {
+      setIsWorking(true)
+      await onRenameCourse(selectedCourseId, name)
+      setIsEditing(false)
+    } finally {
+      setIsWorking(false)
+    }
+  }
+
+  const handleDeleteCourse = async () => {
+    if (!selectedCourseId || !onDeleteCourse) return
+    if (
+      !window.confirm(
+        `Delete “${selectedCourse?.name ?? 'this course'}”? This cannot be undone.`
+      )
+    ) {
+      return
+    }
+
+    try {
+      setIsWorking(true)
+      await onDeleteCourse(selectedCourseId)
+      onSelectCourse(null)
+    } finally {
+      setIsWorking(false)
     }
   }
 
@@ -53,7 +102,7 @@ export function CourseSelector({
         <Button
           size="icon"
           onClick={handleCreateCourse}
-          disabled={!newCourseName.trim()}
+          disabled={!newCourseName.trim() || isWorking}
         >
           <Check className="h-4 w-4" />
         </Button>
@@ -61,9 +110,45 @@ export function CourseSelector({
           variant="outline"
           size="icon"
           onClick={() => setIsCreating(false)}
+          disabled={isWorking}
         >
           <span className="sr-only">Cancel</span>
-          ×
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    )
+  }
+
+  if (isEditing) {
+    return (
+      <div className="flex gap-2">
+        <Input
+          type="text"
+          placeholder="Course name (e.g. Math 101)"
+          value={editedCourseName}
+          onChange={(e) => setEditedCourseName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleRenameCourse()
+            if (e.key === 'Escape') setIsEditing(false)
+          }}
+          className="flex-1"
+          autoFocus
+        />
+        <Button
+          size="icon"
+          onClick={handleRenameCourse}
+          disabled={!editedCourseName.trim() || isWorking}
+        >
+          <Check className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setIsEditing(false)}
+          disabled={isWorking}
+        >
+          <span className="sr-only">Cancel</span>
+          <X className="h-4 w-4" />
         </Button>
       </div>
     )
@@ -72,10 +157,17 @@ export function CourseSelector({
   return (
     <div className="flex gap-2">
       <Select
-        value={selectedCourseId ?? 'none'}
-        onValueChange={(value) => onSelectCourse(value === 'none' ? null : value)}
+        value={selectedCourseId ?? ('none' as const)}
+        onValueChange={(value) =>
+          onSelectCourse(value === 'none' ? null : (value as Course['_id']))
+        }
       >
-        <SelectTrigger className="flex-1">
+        <SelectTrigger
+          className={cn(
+            'flex-1',
+            selectedCourseId ? 'ring-2 ring-ring/35 ring-offset-2 ring-offset-background' : ''
+          )}
+        >
           <SelectValue placeholder="Select a course to save grades" />
         </SelectTrigger>
         <SelectContent>
@@ -87,8 +179,40 @@ export function CourseSelector({
           ))}
         </SelectContent>
       </Select>
-      <Button variant="outline" size="icon" onClick={() => setIsCreating(true)}>
+
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => setIsCreating(true)}
+        disabled={isWorking}
+      >
+        <span className="sr-only">Add course</span>
         <Plus className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => {
+          if (!selectedCourseId) return
+          setEditedCourseName(selectedCourse?.name ?? '')
+          setIsEditing(true)
+        }}
+        disabled={!selectedCourseId || !onRenameCourse || isWorking}
+      >
+        <span className="sr-only">Edit course name</span>
+        <Pencil className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleDeleteCourse}
+        disabled={!selectedCourseId || !onDeleteCourse || isWorking}
+        className="text-destructive hover:text-destructive"
+      >
+        <span className="sr-only">Delete course</span>
+        <Trash2 className="h-4 w-4" />
       </Button>
     </div>
   )

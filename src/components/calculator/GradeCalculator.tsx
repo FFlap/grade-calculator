@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { Calculator, RotateCcw } from 'lucide-react'
+import { Calculator, RotateCcw, SlidersHorizontal } from 'lucide-react'
 import { GradeTable } from './GradeTable'
 import { ResultDisplay } from './ResultDisplay'
 import { CourseSelector } from './CourseSelector'
@@ -13,17 +13,25 @@ import {
   type GradeType,
   type CalculationResult,
   type Course,
+  type LetterGradeThreshold,
   calculateWeightedAverage,
   calculateNeededGrade,
+  LETTER_GRADE_THRESHOLDS,
   percentageToLetter,
 } from './types'
 
 interface GradeCalculatorProps {
   isSignedIn: boolean
   courses: Course[]
-  selectedCourseId: string | null
-  onSelectCourse: (courseId: string | null) => void
-  onCreateCourse: (name: string) => void
+  selectedCourseId: Course['_id'] | null
+  onSelectCourse: (courseId: Course['_id'] | null) => void
+  onCreateCourse: (name: string) => void | Promise<void>
+  onRenameCourse?: (courseId: Course['_id'], name: string) => void | Promise<void>
+  onDeleteCourse?: (courseId: Course['_id']) => void | Promise<void>
+  onUpdateLetterGradeThresholds?: (
+    courseId: Course['_id'],
+    thresholds: LetterGradeThreshold[]
+  ) => void | Promise<void>
 }
 
 function generateId() {
@@ -45,6 +53,9 @@ export function GradeCalculator({
   selectedCourseId,
   onSelectCourse,
   onCreateCourse,
+  onRenameCourse,
+  onDeleteCourse,
+  onUpdateLetterGradeThresholds,
 }: GradeCalculatorProps) {
   const [gradeType, setGradeType] = useState<GradeType>('percentage')
   const [rows, setRows] = useState<GradeRow[]>([
@@ -55,6 +66,20 @@ export function GradeCalculator({
   const [targetGrade, setTargetGrade] = useState('80')
   const [decimalPlaces, setDecimalPlaces] = useState<0 | 1 | 2>(1)
   const [result, setResult] = useState<CalculationResult | null>(null)
+
+  const selectedCourse = useMemo(
+    () => (selectedCourseId ? courses.find((c) => c._id === selectedCourseId) ?? null : null),
+    [courses, selectedCourseId]
+  )
+
+  const [isEditingScale, setIsEditingScale] = useState(false)
+  const [scaleDraft, setScaleDraft] = useState<LetterGradeThreshold[]>([])
+  const [isSavingScale, setIsSavingScale] = useState(false)
+
+  useEffect(() => {
+    if (!isEditingScale) return
+    setScaleDraft(selectedCourse?.letterGradeThresholds ?? LETTER_GRADE_THRESHOLDS)
+  }, [isEditingScale, selectedCourse])
 
   const handleUpdateRow = useCallback(
     (id: string, field: keyof GradeRow, value: string) => {
@@ -96,9 +121,21 @@ export function GradeCalculator({
         ? calculateNeededGrade(calcResult.average, calcResult.totalWeight, target)
         : null
 
+    const averageOnCompletedWork = calcResult.average
+    const overallCoursePercentSoFar = calcResult.weightedSum / 100
+    const thresholds = selectedCourse?.letterGradeThresholds
+
     setResult({
-      weightedAverage: calcResult.average,
-      letterGrade: percentageToLetter(calcResult.average),
+      averageOnCompletedWork,
+      averageOnCompletedWorkLetter: percentageToLetter(
+        averageOnCompletedWork,
+        thresholds
+      ),
+      overallCoursePercentSoFar,
+      overallCoursePercentSoFarLetter: percentageToLetter(
+        overallCoursePercentSoFar,
+        thresholds
+      ),
       totalWeight: calcResult.totalWeight,
       remainingWeight,
       neededGrade: needed,
@@ -157,14 +194,116 @@ export function GradeCalculator({
           {isSignedIn && (
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">
-                Course (save your grades)
+                Course (save your grades + letter scale)
               </Label>
               <CourseSelector
                 courses={courses}
                 selectedCourseId={selectedCourseId}
                 onSelectCourse={onSelectCourse}
                 onCreateCourse={onCreateCourse}
+                onRenameCourse={onRenameCourse}
+                onDeleteCourse={onDeleteCourse}
               />
+
+              {selectedCourseId && onUpdateLetterGradeThresholds && (
+                <div className="mt-2 rounded-lg border border-border bg-muted/30 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm">
+                      <span className="font-medium text-foreground">
+                        Letter grade scale:
+                      </span>{' '}
+                      <span className="text-muted-foreground">
+                        {selectedCourse?.letterGradeThresholds ? 'Custom' : 'Default'}
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditingScale((v) => !v)}
+                    >
+                      <SlidersHorizontal className="h-4 w-4" />
+                      {isEditingScale ? 'Close' : 'Customize'}
+                    </Button>
+                  </div>
+
+                  {isEditingScale && (
+                    <div className="mt-3 space-y-3">
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {scaleDraft.map((t, idx) => (
+                          <div key={t.letter} className="flex items-center gap-2">
+                            <div className="w-10 text-sm font-medium text-foreground">
+                              {t.letter}
+                            </div>
+                            <Input
+                              type="number"
+                              value={t.min}
+                              disabled={t.letter.toUpperCase() === 'F'}
+                              onChange={(e) => {
+                                const value = Number(e.target.value)
+                                setScaleDraft((prev) =>
+                                  prev.map((p, i) =>
+                                    i === idx ? { ...p, min: Number.isFinite(value) ? value : p.min } : p
+                                  )
+                                )
+                              }}
+                              className="h-9"
+                            />
+                            <div className="text-sm text-muted-foreground">%</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setScaleDraft(LETTER_GRADE_THRESHOLDS)}
+                          disabled={isSavingScale}
+                        >
+                          Reset to default
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            const normalized = [...scaleDraft]
+                              .map((t) => ({
+                                letter: t.letter.trim(),
+                                min: Math.max(0, Math.min(100, Number(t.min) || 0)),
+                              }))
+                              .map((t) => (t.letter.toUpperCase() === 'F' ? { ...t, min: 0 } : t))
+
+                            // Ensure ordering matches the default and is descending.
+                            const byLetter = new Map(normalized.map((t) => [t.letter, t]))
+                            const ordered = LETTER_GRADE_THRESHOLDS.map(
+                              (t) => byLetter.get(t.letter) ?? t
+                            )
+                            const isDescending = ordered.every(
+                              (t, i) => i === 0 || ordered[i - 1]!.min >= t.min
+                            )
+                            if (!isDescending) {
+                              window.alert(
+                                'Thresholds must be in descending order (A+ ≥ A ≥ ... ≥ F).'
+                              )
+                              return
+                            }
+
+                            try {
+                              setIsSavingScale(true)
+                              await onUpdateLetterGradeThresholds(selectedCourseId, ordered)
+                              setIsEditingScale(false)
+                            } finally {
+                              setIsSavingScale(false)
+                            }
+                          }}
+                          disabled={isSavingScale}
+                        >
+                          Save scale
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

@@ -1,32 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useUser } from '@clerk/clerk-react'
-import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
-import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GradeCalculator } from '@/components/calculator/GradeCalculator'
 import { FinalGradeCalculator } from '@/components/calculator/FinalGradeCalculator'
 import { GPACalculator } from '@/components/calculator/GPACalculator'
-import type { Course } from '@/components/calculator/types'
 
 export const Route = createFileRoute('/')({
-  component: GradeCalculatorPage,
+  component: AnonymousCalculatorPage,
 })
 
-function GradeCalculatorPage() {
-  const { isSignedIn } = useUser()
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-
-  // Only fetch courses if signed in
-  const coursesData = useQuery(api.courses.list)
-  const courses = (coursesData ?? []) as Course[]
-  const addCourse = useMutation(api.courses.add)
-
-  const handleCreateCourse = async (name: string) => {
-    const courseId = await addCourse({ name })
-    setSelectedCourseId(courseId)
-  }
-
+function AnonymousCalculatorPage() {
   return (
     <div className="min-h-screen bg-background">
       <main className="container max-w-3xl mx-auto px-4 py-8">
@@ -49,11 +31,11 @@ function GradeCalculatorPage() {
 
           <TabsContent value="grade" className="mt-6">
             <GradeCalculator
-              isSignedIn={!!isSignedIn}
-              courses={courses}
-              selectedCourseId={selectedCourseId}
-              onSelectCourse={setSelectedCourseId}
-              onCreateCourse={handleCreateCourse}
+              isSignedIn={false}
+              courses={[]}
+              selectedCourseId={null}
+              onSelectCourse={() => {}}
+              onCreateCourse={() => {}}
             />
           </TabsContent>
 

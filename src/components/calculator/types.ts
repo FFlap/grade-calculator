@@ -1,4 +1,8 @@
+import type { Id } from '../../../convex/_generated/dataModel'
+
 export type GradeType = 'percentage' | 'letters' | 'points'
+
+export type LetterGradeThreshold = { min: number; letter: string }
 
 export interface GradeRow {
   id: string
@@ -8,24 +12,27 @@ export interface GradeRow {
 }
 
 export interface CalculationResult {
-  weightedAverage: number
-  letterGrade: string
+  averageOnCompletedWork: number
+  averageOnCompletedWorkLetter: string
+  overallCoursePercentSoFar: number
+  overallCoursePercentSoFarLetter: string
   totalWeight: number
   remainingWeight: number
   neededGrade: number | null
 }
 
 export interface Course {
-  _id: string
+  _id: Id<'courses'>
   userId: string
   name: string
+  letterGradeThresholds?: LetterGradeThreshold[]
   createdAt: number
 }
 
 export interface Grade {
-  _id: string
+  _id: Id<'grades'>
   userId: string
-  courseId?: string
+  courseId?: Id<'courses'>
   assignmentName?: string
   grade: number
   gradeType: string
@@ -71,8 +78,11 @@ export function letterToPercentage(letter: string): number | null {
   return LETTER_GRADES[upperLetter] ?? null
 }
 
-export function percentageToLetter(percent: number): string {
-  for (const threshold of LETTER_GRADE_THRESHOLDS) {
+export function percentageToLetter(
+  percent: number,
+  thresholds: LetterGradeThreshold[] = LETTER_GRADE_THRESHOLDS
+): string {
+  for (const threshold of thresholds) {
     if (percent >= threshold.min) {
       return threshold.letter
     }
@@ -83,7 +93,7 @@ export function percentageToLetter(percent: number): string {
 export function calculateWeightedAverage(
   rows: GradeRow[],
   gradeType: GradeType
-): { average: number; totalWeight: number } | null {
+): { average: number; totalWeight: number; weightedSum: number } | null {
   let totalWeightedScore = 0
   let totalWeight = 0
 
@@ -110,6 +120,7 @@ export function calculateWeightedAverage(
   return {
     average: totalWeightedScore / totalWeight,
     totalWeight,
+    weightedSum: totalWeightedScore,
   }
 }
 

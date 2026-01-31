@@ -37,13 +37,43 @@ export function ResultDisplay({
       <CardContent className="p-0">
         {/* Main Result */}
         <div className="p-6 bg-gradient-to-r from-primary/5 to-primary/10 border-b border-border">
-          <div className="text-sm text-muted-foreground mb-1">Your Grade</div>
-          <div className="flex items-baseline gap-3">
-            <span className={`text-4xl font-bold ${getGradeColor(result.weightedAverage)}`}>
-              {formatNumber(result.weightedAverage)}%
+          <div className="text-sm text-muted-foreground mb-1">
+            Average (completed work)
+          </div>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span
+              className={`text-4xl font-bold ${getGradeColor(
+                result.averageOnCompletedWork
+              )}`}
+            >
+              {formatNumber(result.averageOnCompletedWork)}%
             </span>
-            <span className={`text-2xl font-semibold ${getGradeColor(result.weightedAverage)}`}>
-              ({result.letterGrade})
+            <span
+              className={`text-2xl font-semibold ${getGradeColor(
+                result.averageOnCompletedWork
+              )}`}
+            >
+              ({result.averageOnCompletedWorkLetter})
+            </span>
+          </div>
+
+          <div className="mt-4 text-sm text-muted-foreground mb-1">
+            Overall (treat ungraded as 0)
+          </div>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span
+              className={`text-3xl font-bold ${getGradeColor(
+                result.overallCoursePercentSoFar
+              )}`}
+            >
+              {formatNumber(result.overallCoursePercentSoFar)}%
+            </span>
+            <span
+              className={`text-xl font-semibold ${getGradeColor(
+                result.overallCoursePercentSoFar
+              )}`}
+            >
+              ({result.overallCoursePercentSoFarLetter})
             </span>
           </div>
         </div>
