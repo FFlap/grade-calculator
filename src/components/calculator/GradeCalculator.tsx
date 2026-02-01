@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useMutation, useQuery } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +11,7 @@ import { GradeTable } from './GradeTable'
 import { ResultDisplay } from './ResultDisplay'
 import { CourseSelector } from './CourseSelector'
 import {
+  type Grade,
   type GradeRow,
   type GradeType,
   type CalculationResult,
@@ -17,6 +20,7 @@ import {
   calculateWeightedAverage,
   calculateNeededGrade,
   LETTER_GRADE_THRESHOLDS,
+  letterToPercentage,
   percentageToLetter,
 } from './types'
 
@@ -72,6 +76,56 @@ export function GradeCalculator({
     [courses, selectedCourseId]
   )
 
+  const savedGrades = useQuery(
+    api.grades.listByCourse,
+    selectedCourseId ? { courseId: selectedCourseId } : 'skip'
+  ) as Grade[] | undefined
+  const upsertGradeRow = useMutation(api.grades.upsertRow)
+  const removeGradeRow = useMutation(api.grades.removeRow)
+  const removeGradesByCourse = useMutation(api.grades.removeByCourse)
+  const updateCourseGradeType = useMutation(api.courses.updateGradeType)
+
+  const latestRowsRef = useRef<GradeRow[]>(rows)
+  useEffect(() => {
+    latestRowsRef.current = rows
+  }, [rows])
+
+  const lastLoadedCourseIdRef = useRef<Course['_id'] | null>(null)
+  useEffect(() => {
+    if (!selectedCourseId) {
+      lastLoadedCourseIdRef.current = null
+      setRows([createEmptyRow(), createEmptyRow(), createEmptyRow()])
+      setResult(null)
+      return
+    }
+    if (lastLoadedCourseIdRef.current === selectedCourseId) return
+    if (!savedGrades) return
+
+    lastLoadedCourseIdRef.current = selectedCourseId
+
+    const mapped = [...savedGrades]
+      .sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
+      .map((g) => ({
+        id: String(g.clientRowId ?? g._id),
+        assignment: g.assignmentName ?? '',
+        grade: g.gradeInput ?? String(g.grade ?? ''),
+        weight: g.weightInput ?? String(g.weight ?? ''),
+      }))
+
+    setRows(
+      mapped.length > 0
+        ? mapped
+        : [createEmptyRow(), createEmptyRow(), createEmptyRow()]
+    )
+    setResult(null)
+  }, [selectedCourseId, savedGrades])
+
+  useEffect(() => {
+    if (!selectedCourseId) return
+    const next = (selectedCourse?.gradeType ?? 'percentage') as GradeType
+    setGradeType(next)
+  }, [selectedCourseId, selectedCourse?.gradeType])
+
   const [isEditingScale, setIsEditingScale] = useState(false)
   const [scaleDraft, setScaleDraft] = useState<LetterGradeThreshold[]>([])
   const [isSavingScale, setIsSavingScale] = useState(false)
@@ -81,20 +135,73 @@ export function GradeCalculator({
     setScaleDraft(selectedCourse?.letterGradeThresholds ?? LETTER_GRADE_THRESHOLDS)
   }, [isEditingScale, selectedCourse])
 
+  const saveTimeoutsRef = useRef<Map<string, number>>(new Map())
+  const scheduleSaveRow = useCallback(
+    (rowId: string) => {
+      if (!isSignedIn || !selectedCourseId) return
+
+      const existing = saveTimeoutsRef.current.get(rowId)
+      if (existing) window.clearTimeout(existing)
+
+      const handle = window.setTimeout(async () => {
+        const row = latestRowsRef.current.find((r) => r.id === rowId)
+        if (!row) return
+
+        const weightParsed = parseFloat(row.weight)
+        const weight = Number.isFinite(weightParsed) && weightParsed > 0 ? weightParsed : 0
+
+        let gradeValue = 0
+        if (gradeType === 'letters') {
+          gradeValue = letterToPercentage(row.grade) ?? 0
+        } else {
+          const parsed = parseFloat(row.grade)
+          gradeValue = Number.isFinite(parsed) ? parsed : 0
+        }
+
+        await upsertGradeRow({
+          courseId: selectedCourseId,
+          clientRowId: row.id,
+          assignmentName: row.assignment || undefined,
+          gradeInput: row.grade || undefined,
+          grade: gradeValue,
+          gradeType,
+          weightInput: row.weight || undefined,
+          weight,
+        })
+
+        saveTimeoutsRef.current.delete(rowId)
+      }, 350)
+
+      saveTimeoutsRef.current.set(rowId, handle)
+    },
+    [gradeType, isSignedIn, selectedCourseId, upsertGradeRow]
+  )
+
   const handleUpdateRow = useCallback(
     (id: string, field: keyof GradeRow, value: string) => {
       setRows((prev) =>
         prev.map((row) => (row.id === id ? { ...row, [field]: value } : row))
       )
       setResult(null) // Clear results when input changes
+
+      scheduleSaveRow(id)
     },
-    []
+    [scheduleSaveRow]
   )
 
-  const handleDeleteRow = useCallback((id: string) => {
-    setRows((prev) => prev.filter((row) => row.id !== id))
-    setResult(null)
-  }, [])
+  const handleDeleteRow = useCallback(
+    (id: string) => {
+      setRows((prev) => prev.filter((row) => row.id !== id))
+      setResult(null)
+
+      if (isSignedIn && selectedCourseId) {
+        removeGradeRow({ courseId: selectedCourseId, clientRowId: id }).catch(
+          () => {}
+        )
+      }
+    },
+    [isSignedIn, removeGradeRow, selectedCourseId]
+  )
 
   const handleAddRow = useCallback(() => {
     setRows((prev) => [...prev, createEmptyRow()])
@@ -102,8 +209,17 @@ export function GradeCalculator({
 
   const handleGradeTypeChange = (value: string) => {
     if (value) {
-      setGradeType(value as GradeType)
+      const next = value as GradeType
+      setGradeType(next)
       setResult(null)
+
+      if (isSignedIn && selectedCourseId) {
+        updateCourseGradeType({ id: selectedCourseId, gradeType: next })
+        // Re-save rows under the new grade type so Semesters reflects the change.
+        for (const row of latestRowsRef.current) {
+          scheduleSaveRow(row.id)
+        }
+      }
     }
   }
 
@@ -146,6 +262,10 @@ export function GradeCalculator({
     setRows([createEmptyRow(), createEmptyRow(), createEmptyRow()])
     setTargetGrade('80')
     setResult(null)
+
+    if (isSignedIn && selectedCourseId) {
+      removeGradesByCourse({ courseId: selectedCourseId })
+    }
   }
 
   return (
@@ -167,23 +287,23 @@ export function GradeCalculator({
               value={gradeType}
               onValueChange={handleGradeTypeChange}
               spacing={1}
-              className="bg-gray-100 p-1 rounded-xl inline-flex justify-start"
+              className="bg-muted p-1 rounded-xl inline-flex justify-start border border-border"
             >
               <ToggleGroupItem
                 value="percentage"
-                className="px-6 py-2 rounded-md text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+                className="px-6 py-2 rounded-md text-sm font-medium transition-all data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
               >
                 Percentage
               </ToggleGroupItem>
               <ToggleGroupItem
                 value="letters"
-                className="px-6 py-2 rounded-md text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+                className="px-6 py-2 rounded-md text-sm font-medium transition-all data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
               >
                 Letters
               </ToggleGroupItem>
               <ToggleGroupItem
                 value="points"
-                className="px-6 py-2 rounded-md text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+                className="px-6 py-2 rounded-md text-sm font-medium transition-all data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
               >
                 Points
               </ToggleGroupItem>
@@ -348,23 +468,23 @@ export function GradeCalculator({
                 value={String(decimalPlaces)}
                 onValueChange={(v) => v && setDecimalPlaces(Number(v) as 0 | 1 | 2)}
                 spacing={1}
-                className="bg-gray-100 p-1 rounded-xl inline-flex"
+                className="bg-muted p-1 rounded-xl inline-flex border border-border"
               >
                 <ToggleGroupItem
                   value="0"
-                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
                 >
                   0
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="1"
-                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
                 >
                   1
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="2"
-                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
+                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
                 >
                   2
                 </ToggleGroupItem>

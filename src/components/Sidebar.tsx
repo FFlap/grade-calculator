@@ -1,7 +1,8 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { UserButton, useUser } from '@clerk/clerk-react'
-import { Calculator, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react'
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from '@clerk/clerk-react'
+import { CalendarDays, Calculator, ChevronLeft, ChevronRight, GraduationCap, LogIn } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 export function Sidebar({
   collapsed,
@@ -17,6 +18,7 @@ export function Sidebar({
     location.pathname === '/grade-calculator' ||
     location.pathname.startsWith('/grade-calculator/')
   const isGpaCalculatorActive = location.pathname === '/gpa-calculator'
+  const isSemestersActive = location.pathname === '/semesters'
 
   const displayName =
     user?.fullName ??
@@ -88,6 +90,21 @@ export function Sidebar({
           </Link>
 
           <Link
+            to="/semesters"
+            className={cn(
+              'flex items-center gap-2 rounded-md text-sm font-medium transition-colors',
+              collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2',
+              isSemestersActive
+                ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+            )}
+            title="Semesters"
+          >
+            <CalendarDays className="h-4 w-4" />
+            <span className={cn(collapsed && 'sr-only')}>Semesters</span>
+          </Link>
+
+          <Link
             to="/gpa-calculator"
             className={cn(
               'flex items-center gap-2 rounded-md text-sm font-medium transition-colors',
@@ -104,26 +121,51 @@ export function Sidebar({
         </div>
 
         <div className="mt-auto p-3 space-y-2">
-          <div
-            className={cn(
-              'flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/30',
-              collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2'
-            )}
-          >
+          <SignedIn>
             <div
               className={cn(
-                'min-w-0 flex-1 text-xs text-sidebar-foreground/80 truncate',
-                collapsed && 'sr-only'
+                'flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/30',
+                collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2'
               )}
-              title={isLoaded ? displayName : undefined}
             >
-              {isLoaded ? displayName : '...'}
+              <div
+                className={cn(
+                  'min-w-0 flex-1 text-xs text-sidebar-foreground/80 truncate',
+                  collapsed && 'sr-only'
+                )}
+                title={isLoaded ? displayName : undefined}
+              >
+                {isLoaded ? displayName : '...'}
+              </div>
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{ elements: { avatarBox: 'h-8 w-8' } }}
+              />
             </div>
-            <UserButton
-              afterSignOutUrl="/"
-              appearance={{ elements: { avatarBox: 'h-8 w-8' } }}
-            />
-          </div>
+          </SignedIn>
+
+          <SignedOut>
+            <div
+              className={cn(
+                'rounded-md border border-sidebar-border bg-sidebar-accent/30',
+                collapsed ? 'p-2' : 'p-3'
+              )}
+            >
+              <div className={cn('text-xs text-sidebar-foreground/80', collapsed && 'sr-only')}>
+                Sign in to save courses, semesters, and grades.
+              </div>
+              <SignInButton mode="modal">
+                <Button
+                  size="sm"
+                  variant="default"
+                  className={cn('mt-2 w-full', collapsed && 'mt-0 w-10 h-10 p-0')}
+                >
+                  <LogIn className={cn('h-4 w-4', !collapsed && 'mr-2')} />
+                  <span className={cn(collapsed && 'sr-only')}>Sign In</span>
+                </Button>
+              </SignInButton>
+            </div>
+          </SignedOut>
         </div>
       </nav>
     </aside>

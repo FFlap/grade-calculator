@@ -10,6 +10,7 @@
 
 import type * as courses from "../courses.js";
 import type * as grades from "../grades.js";
+import type * as semesters from "../semesters.js";
 
 import type {
   ApiFromModules,
@@ -20,6 +21,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   courses: typeof courses;
   grades: typeof grades;
+  semesters: typeof semesters;
 }>;
 
 /**

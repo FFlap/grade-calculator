@@ -24,7 +24,10 @@ export interface CalculationResult {
 export interface Course {
   _id: Id<'courses'>
   userId: string
+  semesterId?: Id<'semesters'>
   name: string
+  credits?: number
+  gradeType?: GradeType
   letterGradeThresholds?: LetterGradeThreshold[]
   createdAt: number
 }
@@ -33,10 +36,22 @@ export interface Grade {
   _id: Id<'grades'>
   userId: string
   courseId?: Id<'courses'>
+  clientRowId?: string
   assignmentName?: string
+  gradeInput?: string
   grade: number
-  gradeType: string
+  gradeType: GradeType
+  weightInput?: string
   weight: number
+  createdAt: number
+}
+
+export interface Semester {
+  _id: Id<'semesters'>
+  userId: string
+  name: string
+  status: 'in_progress' | 'completed'
+  isCurrent: boolean
   createdAt: number
 }
 

@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut } from '@clerk/clerk-react'
+import { useUser } from '@clerk/clerk-react'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { Sidebar } from './Sidebar'
@@ -8,17 +8,18 @@ interface AppLayoutProps {
   children: React.ReactNode
 }
 
-function SignedInLayout({ children }: { children: React.ReactNode }) {
+function ShellLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const { isLoaded, isSignedIn } = useUser()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   // Redirect signed-in users from / to /grade-calculator
   useEffect(() => {
-    if (location.pathname === '/') {
+    if (isLoaded && isSignedIn && location.pathname === '/') {
       navigate({ to: '/grade-calculator' })
     }
-  }, [location.pathname, navigate])
+  }, [isLoaded, isSignedIn, location.pathname, navigate])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -31,7 +32,7 @@ function SignedInLayout({ children }: { children: React.ReactNode }) {
   }, [sidebarCollapsed])
 
   // Don't render content during redirect
-  if (location.pathname === '/') {
+  if (isLoaded && isSignedIn && location.pathname === '/') {
     return null
   }
 
@@ -54,12 +55,5 @@ function SignedInLayout({ children }: { children: React.ReactNode }) {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  return (
-    <>
-      <SignedOut>{children}</SignedOut>
-      <SignedIn>
-        <SignedInLayout>{children}</SignedInLayout>
-      </SignedIn>
-    </>
-  )
+  return <ShellLayout>{children}</ShellLayout>
 }

@@ -116,11 +116,11 @@ export function GPACalculator() {
   }
 
   const getGPAColor = (gpa: number) => {
-    if (gpa >= 3.7) return 'text-green-600'
-    if (gpa >= 3.0) return 'text-blue-600'
-    if (gpa >= 2.0) return 'text-yellow-600'
-    if (gpa >= 1.0) return 'text-orange-600'
-    return 'text-red-600'
+    if (gpa >= 3.7) return 'text-primary'
+    if (gpa >= 3.0) return 'text-foreground'
+    if (gpa >= 2.0) return 'text-muted-foreground'
+    if (gpa >= 1.0) return 'text-muted-foreground'
+    return 'text-destructive'
   }
 
   return (

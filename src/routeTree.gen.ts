@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SemestersRouteImport } from './routes/semesters'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as GpaCalculatorRouteImport } from './routes/gpa-calculator'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GradeCalculatorIndexRouteImport } from './routes/grade-calculator/index'
 import { Route as GradeCalculatorCourseIdRouteImport } from './routes/grade-calculator/$courseId'
 
+const SemestersRoute = SemestersRouteImport.update({
+  id: '/semesters',
+  path: '/semesters',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/gpa-calculator': typeof GpaCalculatorRoute
   '/profile': typeof ProfileRoute
+  '/semesters': typeof SemestersRoute
   '/grade-calculator/$courseId': typeof GradeCalculatorCourseIdRoute
   '/grade-calculator/': typeof GradeCalculatorIndexRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/gpa-calculator': typeof GpaCalculatorRoute
   '/profile': typeof ProfileRoute
+  '/semesters': typeof SemestersRoute
   '/grade-calculator/$courseId': typeof GradeCalculatorCourseIdRoute
   '/grade-calculator': typeof GradeCalculatorIndexRoute
 }
@@ -60,6 +68,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/gpa-calculator': typeof GpaCalculatorRoute
   '/profile': typeof ProfileRoute
+  '/semesters': typeof SemestersRoute
   '/grade-calculator/$courseId': typeof GradeCalculatorCourseIdRoute
   '/grade-calculator/': typeof GradeCalculatorIndexRoute
 }
@@ -69,6 +78,7 @@ export interface FileRouteTypes {
     | '/'
     | '/gpa-calculator'
     | '/profile'
+    | '/semesters'
     | '/grade-calculator/$courseId'
     | '/grade-calculator/'
   fileRoutesByTo: FileRoutesByTo
@@ -76,6 +86,7 @@ export interface FileRouteTypes {
     | '/'
     | '/gpa-calculator'
     | '/profile'
+    | '/semesters'
     | '/grade-calculator/$courseId'
     | '/grade-calculator'
   id:
@@ -83,6 +94,7 @@ export interface FileRouteTypes {
     | '/'
     | '/gpa-calculator'
     | '/profile'
+    | '/semesters'
     | '/grade-calculator/$courseId'
     | '/grade-calculator/'
   fileRoutesById: FileRoutesById
@@ -91,12 +103,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GpaCalculatorRoute: typeof GpaCalculatorRoute
   ProfileRoute: typeof ProfileRoute
+  SemestersRoute: typeof SemestersRoute
   GradeCalculatorCourseIdRoute: typeof GradeCalculatorCourseIdRoute
   GradeCalculatorIndexRoute: typeof GradeCalculatorIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/semesters': {
+      id: '/semesters'
+      path: '/semesters'
+      fullPath: '/semesters'
+      preLoaderRoute: typeof SemestersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -139,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GpaCalculatorRoute: GpaCalculatorRoute,
   ProfileRoute: ProfileRoute,
+  SemestersRoute: SemestersRoute,
   GradeCalculatorCourseIdRoute: GradeCalculatorCourseIdRoute,
   GradeCalculatorIndexRoute: GradeCalculatorIndexRoute,
 }

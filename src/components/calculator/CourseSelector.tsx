@@ -165,7 +165,9 @@ export function CourseSelector({
         <SelectTrigger
           className={cn(
             'flex-1',
-            selectedCourseId ? 'ring-2 ring-ring/35 ring-offset-2 ring-offset-background' : ''
+            selectedCourseId
+              ? 'ring-2 ring-ring/35'
+              : 'ring-1 ring-border/60'
           )}
         >
           <SelectValue placeholder="Select a course to save grades" />

@@ -167,7 +167,7 @@ export function FinalGradeCalculator() {
                 </div>
               ) : (
                 <div className="text-center">
-                  <div className="text-xl font-semibold text-green-600 mb-2">
+                  <div className="text-xl font-semibold text-primary mb-2">
                     You've already made it!
                   </div>
                   <div className="text-muted-foreground">
