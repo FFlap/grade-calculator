@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { SignInButton } from '@clerk/clerk-react'
 import {
   Select,
   SelectContent,
@@ -13,6 +14,7 @@ import { Plus, Check, Pencil, Trash2, X } from 'lucide-react'
 import type { Course } from './types'
 
 interface CourseSelectorProps {
+  isSignedIn: boolean
   courses: Course[]
   selectedCourseId: Course['_id'] | null
   onSelectCourse: (courseId: Course['_id'] | null) => void
@@ -22,6 +24,7 @@ interface CourseSelectorProps {
 }
 
 export function CourseSelector({
+  isSignedIn,
   courses,
   selectedCourseId,
   onSelectCourse,
@@ -35,10 +38,20 @@ export function CourseSelector({
   const [editedCourseName, setEditedCourseName] = useState('')
   const [isWorking, setIsWorking] = useState(false)
 
+  useEffect(() => {
+    if (isSignedIn) return
+    setIsCreating(false)
+    setIsEditing(false)
+    setNewCourseName('')
+    setEditedCourseName('')
+    setIsWorking(false)
+  }, [isSignedIn])
+
   const selectedCourse =
     selectedCourseId ? courses.find((c) => c._id === selectedCourseId) : null
 
   const handleCreateCourse = async () => {
+    if (!isSignedIn) return
     const name = newCourseName.trim()
     if (!name) return
 
@@ -53,6 +66,7 @@ export function CourseSelector({
   }
 
   const handleRenameCourse = async () => {
+    if (!isSignedIn) return
     const name = editedCourseName.trim()
     if (!selectedCourseId || !name || !onRenameCourse) return
 
@@ -66,6 +80,7 @@ export function CourseSelector({
   }
 
   const handleDeleteCourse = async () => {
+    if (!isSignedIn) return
     if (!selectedCourseId || !onDeleteCourse) return
     if (
       !window.confirm(
@@ -161,6 +176,7 @@ export function CourseSelector({
         onValueChange={(value) =>
           onSelectCourse(value === 'none' ? null : (value as Course['_id']))
         }
+        disabled={!isSignedIn || isWorking}
       >
         <SelectTrigger
           className={cn(
@@ -170,7 +186,11 @@ export function CourseSelector({
               : 'ring-1 ring-border/60'
           )}
         >
-          <SelectValue placeholder="Select a course to save grades" />
+          <SelectValue
+            placeholder={
+              isSignedIn ? 'Select a course to save grades' : 'Sign in to save grades to a course'
+            }
+          />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="none">No course selected</SelectItem>
@@ -182,15 +202,24 @@ export function CourseSelector({
         </SelectContent>
       </Select>
 
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => setIsCreating(true)}
-        disabled={isWorking}
-      >
-        <span className="sr-only">Add course</span>
-        <Plus className="h-4 w-4" />
-      </Button>
+      {isSignedIn ? (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setIsCreating(true)}
+          disabled={isWorking}
+        >
+          <span className="sr-only">Add course</span>
+          <Plus className="h-4 w-4" />
+        </Button>
+      ) : (
+        <SignInButton mode="modal">
+          <Button variant="outline" size="icon" disabled={isWorking}>
+            <span className="sr-only">Sign in to add a course</span>
+            <Plus className="h-4 w-4" />
+          </Button>
+        </SignInButton>
+      )}
 
       <Button
         variant="outline"
@@ -200,7 +229,7 @@ export function CourseSelector({
           setEditedCourseName(selectedCourse?.name ?? '')
           setIsEditing(true)
         }}
-        disabled={!selectedCourseId || !onRenameCourse || isWorking}
+        disabled={!isSignedIn || !selectedCourseId || !onRenameCourse || isWorking}
       >
         <span className="sr-only">Edit course name</span>
         <Pencil className="h-4 w-4" />
@@ -210,7 +239,7 @@ export function CourseSelector({
         variant="outline"
         size="icon"
         onClick={handleDeleteCourse}
-        disabled={!selectedCourseId || !onDeleteCourse || isWorking}
+        disabled={!isSignedIn || !selectedCourseId || !onDeleteCourse || isWorking}
         className="text-destructive hover:text-destructive"
       >
         <span className="sr-only">Delete course</span>

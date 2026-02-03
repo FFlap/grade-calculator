@@ -310,22 +310,22 @@ export function GradeCalculator({
             </ToggleGroup>
           </div>
 
-          {/* Course Selector (signed-in users only) */}
-          {isSignedIn && (
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">
-                Course (save your grades + letter scale)
-              </Label>
-              <CourseSelector
-                courses={courses}
-                selectedCourseId={selectedCourseId}
-                onSelectCourse={onSelectCourse}
-                onCreateCourse={onCreateCourse}
-                onRenameCourse={onRenameCourse}
-                onDeleteCourse={onDeleteCourse}
-              />
+          {/* Course Selector */}
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">
+              Course (save your grades + letter scale)
+            </Label>
+            <CourseSelector
+              isSignedIn={isSignedIn}
+              courses={courses}
+              selectedCourseId={selectedCourseId}
+              onSelectCourse={onSelectCourse}
+              onCreateCourse={onCreateCourse}
+              onRenameCourse={onRenameCourse}
+              onDeleteCourse={onDeleteCourse}
+            />
 
-              {selectedCourseId && onUpdateLetterGradeThresholds && (
+            {isSignedIn && selectedCourseId && onUpdateLetterGradeThresholds && (
                 <div className="mt-2 rounded-lg border border-border bg-muted/30 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="text-sm">
@@ -423,9 +423,8 @@ export function GradeCalculator({
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Grade Input Table */}
           <GradeTable

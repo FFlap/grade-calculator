@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { useEffect, useState } from 'react'
+import { useUser } from '@clerk/clerk-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GradeCalculator } from '@/components/calculator/GradeCalculator'
 import { FinalGradeCalculator } from '@/components/calculator/FinalGradeCalculator'
@@ -14,6 +15,7 @@ export const Route = createFileRoute('/grade-calculator/$courseId')({
 function GradeCalculatorWithCourse() {
   const { courseId } = Route.useParams()
   const navigate = useNavigate()
+  const { isLoaded, isSignedIn } = useUser()
 
   const coursesData = useQuery(api.courses.list)
   const courses = (coursesData ?? []) as Course[]
@@ -83,7 +85,7 @@ function GradeCalculatorWithCourse() {
 
           <TabsContent value="grade" className="mt-6">
             <GradeCalculator
-              isSignedIn={true}
+              isSignedIn={Boolean(isLoaded && isSignedIn)}
               courses={courses}
               selectedCourseId={selectedCourseId}
               onSelectCourse={(id) => {

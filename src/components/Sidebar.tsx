@@ -89,20 +89,22 @@ export function Sidebar({
             <span className={cn(collapsed && 'sr-only')}>Grade Calculator</span>
           </Link>
 
-          <Link
-            to="/semesters"
-            className={cn(
-              'flex items-center gap-2 rounded-md text-sm font-medium transition-colors',
-              collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2',
-              isSemestersActive
-                ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
-            )}
-            title="Semesters"
-          >
-            <CalendarDays className="h-4 w-4" />
-            <span className={cn(collapsed && 'sr-only')}>Semesters</span>
-          </Link>
+          <SignedIn>
+            <Link
+              to="/semesters"
+              className={cn(
+                'flex items-center gap-2 rounded-md text-sm font-medium transition-colors',
+                collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2',
+                isSemestersActive
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+              )}
+              title="Semesters"
+            >
+              <CalendarDays className="h-4 w-4" />
+              <span className={cn(collapsed && 'sr-only')}>Semesters</span>
+            </Link>
+          </SignedIn>
 
           <Link
             to="/gpa-calculator"
