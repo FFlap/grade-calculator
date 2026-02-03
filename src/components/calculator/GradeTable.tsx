@@ -34,8 +34,9 @@ export function GradeTable({
   return (
     <div className="space-y-3">
       {/* Header */}
-      <div className="grid grid-cols-[1fr_100px_100px_40px] gap-2 text-sm font-medium text-muted-foreground px-1">
+      <div className="hidden sm:grid grid-cols-[1fr_150px_100px_100px_40px] gap-2 text-sm font-medium text-muted-foreground px-1">
         <span>Assignment (optional)</span>
+        <span className="text-center">Date</span>
         <span className="text-center">{getGradeColumnHeader()}</span>
         <span className="text-center">Weight</span>
         <span></span>

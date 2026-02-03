@@ -7,6 +7,7 @@ export default defineSchema({
     courseId: v.optional(v.id('courses')),  // Link to course for signed-in users
     clientRowId: v.optional(v.string()),
     assignmentName: v.optional(v.string()),
+    dueDate: v.optional(v.string()), // YYYY-MM-DD
     gradeInput: v.optional(v.string()),
     grade: v.number(),                       // The grade value (percentage, points, or converted from letter)
     gradeType: v.string(),                   // 'percentage' | 'letter' | 'points'

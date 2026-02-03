@@ -85,6 +85,7 @@ export const upsertRow = mutation({
     courseId: v.id('courses'),
     clientRowId: v.string(),
     assignmentName: v.optional(v.string()),
+    dueDate: v.optional(v.string()),
     gradeInput: v.optional(v.string()),
     grade: v.optional(v.number()),
     gradeType: v.optional(v.string()),
@@ -115,6 +116,9 @@ export const upsertRow = mutation({
       args.gradeType ?? (row ? row.gradeType : undefined) ?? course.gradeType ?? 'percentage'
     )
 
+    const nextDueDate =
+      args.dueDate !== undefined ? args.dueDate.trim() : row?.dueDate
+
     const nextAssignmentName =
       args.assignmentName ?? (row ? row.assignmentName : undefined)
     const nextGradeInput = args.gradeInput ?? (row ? row.gradeInput : undefined) ?? ''
@@ -126,6 +130,7 @@ export const upsertRow = mutation({
     if (row) {
       await ctx.db.patch(row._id, {
         assignmentName: nextAssignmentName,
+        dueDate: nextDueDate,
         gradeInput: nextGradeInput,
         grade,
         gradeType: resolvedGradeType,
@@ -140,6 +145,7 @@ export const upsertRow = mutation({
       courseId: args.courseId,
       clientRowId: args.clientRowId,
       assignmentName: nextAssignmentName,
+      dueDate: nextDueDate,
       gradeInput: nextGradeInput,
       grade,
       gradeType: resolvedGradeType,
@@ -147,6 +153,48 @@ export const upsertRow = mutation({
       weight,
       createdAt: Date.now(),
     })
+  },
+})
+
+export const listDated = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) {
+      return []
+    }
+
+    const courses = await ctx.db
+      .query('courses')
+      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .collect()
+    const courseNameById = new Map(courses.map((c) => [String(c._id), c.name]))
+
+    const grades = await ctx.db
+      .query('grades')
+      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .collect()
+
+    const dated = grades
+      .filter((g) => {
+        const due = (g as any).dueDate as string | undefined
+        return (
+          g.courseId !== undefined &&
+          typeof due === 'string' &&
+          due.trim().length > 0
+        )
+      })
+      .map((g) => ({
+        ...g,
+        dueDate: (g as any).dueDate as string,
+        courseName: courseNameById.get(String(g.courseId)) ?? 'Course',
+      }))
+      .sort((a, b) => {
+        if (a.dueDate !== b.dueDate) return a.dueDate.localeCompare(b.dueDate)
+        return (a.createdAt ?? 0) - (b.createdAt ?? 0)
+      })
+
+    return dated
   },
 })
 

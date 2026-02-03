@@ -148,6 +148,7 @@ function SemestersPage() {
     const rows = courseGrades.map((g) => ({
       id: String(g.clientRowId ?? g._id),
       assignment: g.assignmentName ?? '',
+      date: g.dueDate ?? '',
       grade: g.gradeInput ?? String(g.grade ?? ''),
       weight: g.weightInput ?? String(g.weight ?? ''),
     }))

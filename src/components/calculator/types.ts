@@ -7,6 +7,7 @@ export type LetterGradeThreshold = { min: number; letter: string }
 export interface GradeRow {
   id: string
   assignment: string
+  date: string
   grade: string
   weight: string
 }
@@ -38,6 +39,7 @@ export interface Grade {
   courseId?: Id<'courses'>
   clientRowId?: string
   assignmentName?: string
+  dueDate?: string
   gradeInput?: string
   grade: number
   gradeType: GradeType

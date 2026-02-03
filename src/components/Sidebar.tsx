@@ -1,6 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from '@clerk/clerk-react'
-import { CalendarDays, Calculator, ChevronLeft, ChevronRight, GraduationCap, LogIn } from 'lucide-react'
+import { Calendar, CalendarDays, Calculator, ChevronLeft, ChevronRight, GraduationCap, LogIn } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -19,6 +19,7 @@ export function Sidebar({
     location.pathname.startsWith('/grade-calculator/')
   const isGpaCalculatorActive = location.pathname === '/gpa-calculator'
   const isSemestersActive = location.pathname === '/semesters'
+  const isCalendarActive = location.pathname === '/calendar'
 
   const displayName =
     user?.fullName ??
@@ -90,12 +91,27 @@ export function Sidebar({
           </Link>
 
           <SignedIn>
-            <Link
-              to="/semesters"
-              className={cn(
-                'flex items-center gap-2 rounded-md text-sm font-medium transition-colors',
-                collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2',
-                isSemestersActive
+          <Link
+            to="/calendar"
+            className={cn(
+              'flex items-center gap-2 rounded-md text-sm font-medium transition-colors',
+              collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2',
+              isCalendarActive
+                ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+            )}
+            title="Calendar"
+          >
+            <Calendar className="h-4 w-4" />
+            <span className={cn(collapsed && 'sr-only')}>Calendar</span>
+          </Link>
+
+          <Link
+            to="/semesters"
+            className={cn(
+              'flex items-center gap-2 rounded-md text-sm font-medium transition-colors',
+              collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2',
+              isSemestersActive
                   ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                   : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
               )}

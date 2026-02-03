@@ -46,6 +46,7 @@ function createEmptyRow(): GradeRow {
   return {
     id: generateId(),
     assignment: '',
+    date: '',
     grade: '',
     weight: '',
   }
@@ -108,6 +109,7 @@ export function GradeCalculator({
       .map((g) => ({
         id: String(g.clientRowId ?? g._id),
         assignment: g.assignmentName ?? '',
+        date: g.dueDate ?? '',
         grade: g.gradeInput ?? String(g.grade ?? ''),
         weight: g.weightInput ?? String(g.weight ?? ''),
       }))
@@ -161,11 +163,12 @@ export function GradeCalculator({
         await upsertGradeRow({
           courseId: selectedCourseId,
           clientRowId: row.id,
-          assignmentName: row.assignment || undefined,
-          gradeInput: row.grade || undefined,
+          assignmentName: row.assignment,
+          dueDate: row.date,
+          gradeInput: row.grade,
           grade: gradeValue,
           gradeType,
-          weightInput: row.weight || undefined,
+          weightInput: row.weight,
           weight,
         })
 

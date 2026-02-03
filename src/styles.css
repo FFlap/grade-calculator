@@ -168,3 +168,37 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+
+/* Hide native date picker icon so we can use the themed icon inside the field */
+input[data-slot='input'][type='date']::-webkit-calendar-picker-indicator {
+  opacity: 0;
+}
+
+input[data-slot='input'][type='date']::-webkit-clear-button {
+  display: none;
+}
+
+input[data-slot='input'][type='date']::-webkit-inner-spin-button {
+  display: none;
+}
+
+input[data-slot='input'][type='date']::-moz-calendar-picker-indicator {
+  opacity: 0;
+}
+
+input[data-slot='input'][type='date']::-ms-clear {
+  display: none;
+}
+
+/* Hide native date picker icons (we render our own) */
+input[data-slot="input"][type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+}
+
+input[data-slot="input"][type="date"]::-webkit-clear-button {
+  display: none;
+}
+
+input[data-slot="input"][type="date"]::-moz-calendar-picker-indicator {
+  opacity: 0;
+}
