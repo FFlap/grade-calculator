@@ -3,13 +3,11 @@ import type { CalculationResult } from './types'
 
 interface ResultDisplayProps {
   result: CalculationResult | null
-  decimalPlaces: number
   targetGrade: number
 }
 
 export function ResultDisplay({
   result,
-  decimalPlaces,
   targetGrade,
 }: ResultDisplayProps) {
   if (!result) {
@@ -22,7 +20,7 @@ export function ResultDisplay({
     )
   }
 
-  const formatNumber = (num: number) => num.toFixed(decimalPlaces)
+  const formatNumber = (num: number) => num.toFixed(2)
 
   const getGradeColor = (grade: number) => {
     if (grade >= 90) return 'text-primary'

@@ -69,7 +69,6 @@ export function GradeCalculator({
     createEmptyRow(),
   ])
   const [targetGrade, setTargetGrade] = useState('80')
-  const [decimalPlaces, setDecimalPlaces] = useState<0 | 1 | 2>(1)
   const [result, setResult] = useState<CalculationResult | null>(null)
 
   const selectedCourse = useMemo(
@@ -513,7 +512,7 @@ export function GradeCalculator({
           {/* Divider */}
           <div className="border-t border-border" />
 
-          {/* Target Grade & Decimal Places */}
+          {/* Target Grade */}
           <div className="flex flex-wrap items-end gap-6">
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">
@@ -531,38 +530,6 @@ export function GradeCalculator({
                 />
                 <span className="text-sm text-muted-foreground">%</span>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">
-                Decimal places
-              </Label>
-              <ToggleGroup
-                type="single"
-                value={String(decimalPlaces)}
-                onValueChange={(v) => v && setDecimalPlaces(Number(v) as 0 | 1 | 2)}
-                spacing={1}
-                className="bg-muted p-1 rounded-xl inline-flex border border-border"
-              >
-                <ToggleGroupItem
-                  value="0"
-                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
-                >
-                  0
-                </ToggleGroupItem>
-                <ToggleGroupItem
-                  value="1"
-                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
-                >
-                  1
-                </ToggleGroupItem>
-                <ToggleGroupItem
-                  value="2"
-                  className="w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-all data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm border-transparent hover:bg-transparent"
-                >
-                  2
-                </ToggleGroupItem>
-              </ToggleGroup>
             </div>
           </div>
 
@@ -583,7 +550,6 @@ export function GradeCalculator({
       {/* Results Display */}
       <ResultDisplay
         result={result}
-        decimalPlaces={decimalPlaces}
         targetGrade={targetGradeValue}
       />
 
