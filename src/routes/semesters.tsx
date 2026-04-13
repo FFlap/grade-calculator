@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMemo, useState, useEffect, useRef } from 'react'
+import type { DragEvent } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { Card, CardContent } from '@/components/ui/card'
@@ -227,6 +228,8 @@ function SemestersPage() {
   const [courseSettingsName, setCourseSettingsName] = useState('')
   const [courseSettingsCredits, setCourseSettingsCredits] = useState('3')
   const [isCourseSettingsWorking, setIsCourseSettingsWorking] = useState(false)
+  const [draggingCourseId, setDraggingCourseId] = useState<string | null>(null)
+  const [dragOverSemesterId, setDragOverSemesterId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!settingsCourseId) return
@@ -316,6 +319,55 @@ function SemestersPage() {
     }
   }
 
+  const handleCourseDragStart = (
+    event: DragEvent<HTMLDivElement>,
+    courseId: string
+  ) => {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', courseId)
+    setDraggingCourseId(courseId)
+  }
+
+  const handleCourseDragEnd = () => {
+    setDraggingCourseId(null)
+    setDragOverSemesterId(null)
+  }
+
+  const handleCourseDragOver = (
+    event: DragEvent,
+    targetSemesterId: string
+  ) => {
+    if (!draggingCourseId) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+    setDragOverSemesterId(targetSemesterId)
+  }
+
+  const handleCourseDrop = async (
+    event: DragEvent,
+    targetSemesterId: string
+  ) => {
+    event.preventDefault()
+    const courseId = event.dataTransfer.getData('text/plain') || draggingCourseId
+    setDraggingCourseId(null)
+    setDragOverSemesterId(null)
+
+    const course = courseId ? courseById.get(courseId) : null
+    if (!course) return
+
+    const nextSemesterId =
+      targetSemesterId === 'unassigned'
+        ? undefined
+        : (targetSemesterId as Semester['_id'])
+    const currentSemesterId = course.semesterId ? String(course.semesterId) : 'unassigned'
+    if (currentSemesterId === targetSemesterId) return
+
+    await updateCourseSemester({
+      id: course._id,
+      semesterId: nextSemesterId,
+    })
+  }
+
   const semesterCards = sortedSemesters.map((semester) => {
     const semId = String(semester._id)
     const isOpen = openSemesterIds.has(semId)
@@ -330,8 +382,16 @@ function SemestersPage() {
     return (
       <Card
         key={semId}
+        onDragOver={(event) => handleCourseDragOver(event, semId)}
+        onDragLeave={(event) => {
+          const nextTarget = event.relatedTarget
+          if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return
+          setDragOverSemesterId((prev) => (prev === semId ? null : prev))
+        }}
+        onDrop={(event) => handleCourseDrop(event, semId)}
         className={cn(
-          'border-border overflow-hidden py-0 gap-0',
+          'border-border overflow-hidden py-0 gap-0 transition-colors',
+          dragOverSemesterId === semId && 'border-primary/60 bg-primary/5',
           semester.isCurrent && 'ring-1 ring-ring/35'
         )}
       >
@@ -441,7 +501,13 @@ function SemestersPage() {
                     return (
                       <div
                         key={courseId}
-                        className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3"
+                        draggable
+                        onDragStart={(event) => handleCourseDragStart(event, courseId)}
+                        onDragEnd={handleCourseDragEnd}
+                        className={cn(
+                          'flex cursor-grab items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 active:cursor-grabbing',
+                          draggingCourseId === courseId && 'opacity-50'
+                        )}
                       >
                         <div className="h-9 w-9 rounded-md bg-accent/15 border border-border flex items-center justify-center text-foreground/80 text-xs font-semibold">
                           {course.name.trim().slice(0, 1).toUpperCase()}
@@ -524,8 +590,20 @@ function SemestersPage() {
 
   const unassignedCourses = coursesBySemesterId.get('unassigned') ?? []
   const unassignedCard =
-    unassignedCourses.length > 0 ? (
-      <Card className="border-border overflow-hidden py-0 gap-0">
+    unassignedCourses.length > 0 || draggingCourseId !== null ? (
+      <Card
+        onDragOver={(event) => handleCourseDragOver(event, 'unassigned')}
+        onDragLeave={(event) => {
+          const nextTarget = event.relatedTarget
+          if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return
+          setDragOverSemesterId((prev) => (prev === 'unassigned' ? null : prev))
+        }}
+        onDrop={(event) => handleCourseDrop(event, 'unassigned')}
+        className={cn(
+          'border-border overflow-hidden py-0 gap-0 transition-colors',
+          dragOverSemesterId === 'unassigned' && 'border-primary/60 bg-primary/5'
+        )}
+      >
         <div className="px-5 py-4 border-b border-border/60 bg-card">
           <div className="flex items-center gap-3">
             <div className="text-lg font-semibold text-foreground">Unassigned</div>
@@ -539,66 +617,79 @@ function SemestersPage() {
         </div>
         <CardContent className="p-5">
           <div className="space-y-2">
-            {unassignedCourses.map((course) => {
-              const percent = getCoursePercent(course)
-              const letter = percent === null ? null : getCourseLetter(course, percent)
-              return (
-                <div
-                  key={String(course._id)}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3"
-                >
-                  <div className="h-9 w-9 rounded-md bg-accent/15 border border-border flex items-center justify-center text-foreground/80 text-xs font-semibold">
-                    {course.name.trim().slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-foreground truncate">{course.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {getCourseCredits(course)} credits
+            {unassignedCourses.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
+                Drop a course here to remove it from a semester.
+              </div>
+            ) : (
+              unassignedCourses.map((course) => {
+                const percent = getCoursePercent(course)
+                const letter = percent === null ? null : getCourseLetter(course, percent)
+                const courseId = String(course._id)
+                return (
+                  <div
+                    key={courseId}
+                    draggable
+                    onDragStart={(event) => handleCourseDragStart(event, courseId)}
+                    onDragEnd={handleCourseDragEnd}
+                    className={cn(
+                      'flex cursor-grab items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 active:cursor-grabbing',
+                      draggingCourseId === courseId && 'opacity-50'
+                    )}
+                  >
+                    <div className="h-9 w-9 rounded-md bg-accent/15 border border-border flex items-center justify-center text-foreground/80 text-xs font-semibold">
+                      {course.name.trim().slice(0, 1).toUpperCase()}
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Grade
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-foreground truncate">{course.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {getCourseCredits(course)} credits
+                      </div>
                     </div>
-                    <div className="text-sm font-semibold text-foreground">
-                      {percent === null || letter === null ? '—' : `${letter} (${Math.round(percent)}%)`}
+                    <div className="text-right">
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        Grade
+                      </div>
+                      <div className="text-sm font-semibold text-foreground">
+                        {percent === null || letter === null ? '—' : `${letter} (${Math.round(percent)}%)`}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => openCourseSettings(course)}
-                      title="Course settings"
-                    >
-                      <Settings className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => openCourseSettings(course)}
+                        title="Course settings"
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
 
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/grade-calculator/$courseId" params={{ courseId: course._id }}>
-                        Go to Course
-                      </Link>
-                    </Button>
-                  </div>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to="/grade-calculator/$courseId" params={{ courseId: course._id }}>
+                          Go to Course
+                        </Link>
+                      </Button>
+                    </div>
 
-                  {currentSemester && (
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        updateCourseSemester({
-                          id: course._id,
-                          semesterId: currentSemester._id,
-                        })
-                      }
-                    >
-                      Assign to {currentSemester.name}
-                    </Button>
-                  )}
-                </div>
-            )
-          })}
+                    {currentSemester && (
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          updateCourseSemester({
+                            id: course._id,
+                            semesterId: currentSemester._id,
+                          })
+                        }
+                      >
+                        Assign to {currentSemester.name}
+                      </Button>
+                    )}
+                  </div>
+                )
+              })
+            )}
           </div>
         </CardContent>
       </Card>
