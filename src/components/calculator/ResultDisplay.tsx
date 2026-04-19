@@ -36,6 +36,7 @@ export function ResultDisplay({
   }
 
   const formatNumber = (num: number) => num.toFixed(2)
+  const hasUngradedWeight = result.totalWeight < 100
 
   const getGradeColor = (grade: number) => {
     if (grade >= 90) return 'text-primary'
@@ -70,36 +71,41 @@ export function ResultDisplay({
             </span>
           </div>
 
-          <div className="mt-4 text-sm text-muted-foreground mb-1">
-            Overall (treat ungraded as 0)
-          </div>
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span
-              className={`text-3xl font-bold ${getGradeColor(
-                result.overallCoursePercentSoFar
-              )}`}
-            >
-              {formatNumber(result.overallCoursePercentSoFar)}%
-            </span>
-            <span
-              className={`text-xl font-semibold ${getGradeColor(
-                result.overallCoursePercentSoFar
-              )}`}
-            >
-              ({result.overallCoursePercentSoFarLetter})
-            </span>
-          </div>
+          {hasUngradedWeight && (
+            <>
+              <div className="mt-4 text-sm text-muted-foreground mb-1">
+                Overall (treat ungraded as 0)
+              </div>
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span
+                  className={`text-3xl font-bold ${getGradeColor(
+                    result.overallCoursePercentSoFar
+                  )}`}
+                >
+                  {formatNumber(result.overallCoursePercentSoFar)}%
+                </span>
+                <span
+                  className={`text-xl font-semibold ${getGradeColor(
+                    result.overallCoursePercentSoFar
+                  )}`}
+                >
+                  ({result.overallCoursePercentSoFarLetter})
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Additional Info */}
-        <div className="p-6 space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Total weight calculated</span>
-            <span className="font-medium">{formatNumber(result.totalWeight)}%</span>
-          </div>
+        {hasUngradedWeight && (
+          <div className="p-6 space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Total weight calculated</span>
+              <span className="font-medium">{formatNumber(result.totalWeight)}%</span>
+            </div>
 
-          {result.remainingWeight > 0 && (
-            <>
+            {result.remainingWeight > 0 && (
+              <>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Remaining weight</span>
                 <span className="font-medium">{formatNumber(result.remainingWeight)}%</span>
@@ -125,9 +131,10 @@ export function ResultDisplay({
                   )}
                 </div>
               )}
-            </>
-          )}
-        </div>
+              </>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
