@@ -163,8 +163,8 @@ export function GPACalculator() {
                     handleUpdateCourse(course.id, 'grade', value)
                   }
                 >
-                  <SelectTrigger className="bg-input border-border">
-                    <SelectValue />
+                  <SelectTrigger className="w-full bg-input border-border">
+                    <SelectValue placeholder="Grade" />
                   </SelectTrigger>
                   <SelectContent>
                     {GRADE_OPTIONS.map((grade) => (
