@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GradeCalculator } from '@/components/calculator/GradeCalculator'
-import { FinalGradeCalculator } from '@/components/calculator/FinalGradeCalculator'
 import { GPACalculator } from '@/components/calculator/GPACalculator'
 
 export const Route = createFileRoute('/')({
@@ -20,7 +19,6 @@ function AnonymousCalculatorPage() {
 
           <TabsList variant="line" className="mt-8">
             <TabsTrigger value="grade">Grades</TabsTrigger>
-            <TabsTrigger value="final">Final exam</TabsTrigger>
             <TabsTrigger value="gpa">GPA</TabsTrigger>
           </TabsList>
         </div>
@@ -36,10 +34,6 @@ function AnonymousCalculatorPage() {
               onSelectCourse={() => {}}
               onCreateCourse={() => {}}
             />
-          </TabsContent>
-
-          <TabsContent value="final">
-            <FinalGradeCalculator />
           </TabsContent>
 
           <TabsContent value="gpa">

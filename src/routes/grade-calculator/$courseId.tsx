@@ -3,9 +3,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { useEffect, useState } from 'react'
 import { useUser } from '@clerk/clerk-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GradeCalculator } from '@/components/calculator/GradeCalculator'
-import { FinalGradeCalculator } from '@/components/calculator/FinalGradeCalculator'
 import type { Course, LetterGradeThreshold } from '@/components/calculator/types'
 
 export const Route = createFileRoute('/grade-calculator/$courseId')({
@@ -66,7 +64,7 @@ function GradeCalculatorWithCourse() {
   }
 
   return (
-    <Tabs defaultValue="grade" className="app-page">
+    <div className="app-page">
       <section className="app-page-header">
         <div className="app-page-header-inner">
           <div className="app-page-title-row">
@@ -82,41 +80,30 @@ function GradeCalculatorWithCourse() {
               {courses.length} course{courses.length === 1 ? '' : 's'}
             </div>
           </div>
-
-          <TabsList variant="line" className="mt-8">
-            <TabsTrigger value="grade">Grades</TabsTrigger>
-            <TabsTrigger value="final">Final exam</TabsTrigger>
-          </TabsList>
         </div>
       </section>
 
       <main className="app-page-body">
         <div className="app-page-body-narrow">
-          <TabsContent value="grade">
-            <GradeCalculator
-              isSignedIn={Boolean(isLoaded && isSignedIn)}
-              courses={courses}
-              selectedCourseId={selectedCourseId}
-              onSelectCourse={(id) => {
-                setSelectedCourseId(id)
-                if (!id) {
-                  navigate({ to: '/grade-calculator' })
-                } else {
-                  navigate({ to: '/grade-calculator/$courseId', params: { courseId: id } })
-                }
-              }}
-              onCreateCourse={handleCreateCourse}
-              onRenameCourse={handleRenameCourse}
-              onDeleteCourse={handleDeleteCourse}
-              onUpdateLetterGradeThresholds={handleUpdateThresholds}
-            />
-          </TabsContent>
-
-          <TabsContent value="final">
-            <FinalGradeCalculator />
-          </TabsContent>
+          <GradeCalculator
+            isSignedIn={Boolean(isLoaded && isSignedIn)}
+            courses={courses}
+            selectedCourseId={selectedCourseId}
+            onSelectCourse={(id) => {
+              setSelectedCourseId(id)
+              if (!id) {
+                navigate({ to: '/grade-calculator' })
+              } else {
+                navigate({ to: '/grade-calculator/$courseId', params: { courseId: id } })
+              }
+            }}
+            onCreateCourse={handleCreateCourse}
+            onRenameCourse={handleRenameCourse}
+            onDeleteCourse={handleDeleteCourse}
+            onUpdateLetterGradeThresholds={handleUpdateThresholds}
+          />
         </div>
       </main>
-    </Tabs>
+    </div>
   )
 }

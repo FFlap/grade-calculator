@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SemestersRouteImport } from './routes/semesters'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as GpaCalculatorRouteImport } from './routes/gpa-calculator'
+import { Route as FinalExamRouteImport } from './routes/final-exam'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GradeCalculatorIndexRouteImport } from './routes/grade-calculator/index'
@@ -30,6 +31,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const GpaCalculatorRoute = GpaCalculatorRouteImport.update({
   id: '/gpa-calculator',
   path: '/gpa-calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinalExamRoute = FinalExamRouteImport.update({
+  id: '/final-exam',
+  path: '/final-exam',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CalendarRoute = CalendarRouteImport.update({
@@ -56,6 +62,7 @@ const GradeCalculatorCourseIdRoute = GradeCalculatorCourseIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
+  '/final-exam': typeof FinalExamRoute
   '/gpa-calculator': typeof GpaCalculatorRoute
   '/profile': typeof ProfileRoute
   '/semesters': typeof SemestersRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
+  '/final-exam': typeof FinalExamRoute
   '/gpa-calculator': typeof GpaCalculatorRoute
   '/profile': typeof ProfileRoute
   '/semesters': typeof SemestersRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
+  '/final-exam': typeof FinalExamRoute
   '/gpa-calculator': typeof GpaCalculatorRoute
   '/profile': typeof ProfileRoute
   '/semesters': typeof SemestersRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/calendar'
+    | '/final-exam'
     | '/gpa-calculator'
     | '/profile'
     | '/semesters'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/calendar'
+    | '/final-exam'
     | '/gpa-calculator'
     | '/profile'
     | '/semesters'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/calendar'
+    | '/final-exam'
     | '/gpa-calculator'
     | '/profile'
     | '/semesters'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalendarRoute: typeof CalendarRoute
+  FinalExamRoute: typeof FinalExamRoute
   GpaCalculatorRoute: typeof GpaCalculatorRoute
   ProfileRoute: typeof ProfileRoute
   SemestersRoute: typeof SemestersRoute
@@ -142,6 +155,13 @@ declare module '@tanstack/react-router' {
       path: '/gpa-calculator'
       fullPath: '/gpa-calculator'
       preLoaderRoute: typeof GpaCalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/final-exam': {
+      id: '/final-exam'
+      path: '/final-exam'
+      fullPath: '/final-exam'
+      preLoaderRoute: typeof FinalExamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/calendar': {
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalendarRoute: CalendarRoute,
+  FinalExamRoute: FinalExamRoute,
   GpaCalculatorRoute: GpaCalculatorRoute,
   ProfileRoute: ProfileRoute,
   SemestersRoute: SemestersRoute,

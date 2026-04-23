@@ -6,6 +6,7 @@ import {
   Calculator,
   ChevronLeft,
   ChevronRight,
+  ClipboardPenLine,
   GraduationCap,
   LogIn,
 } from 'lucide-react'
@@ -25,6 +26,7 @@ export function Sidebar({
   const isGradeCalculatorActive =
     location.pathname === '/grade-calculator' ||
     location.pathname.startsWith('/grade-calculator/')
+  const isFinalExamActive = location.pathname === '/final-exam'
   const isGpaCalculatorActive = location.pathname === '/gpa-calculator'
   const isSemestersActive = location.pathname === '/semesters'
   const isCalendarActive = location.pathname === '/calendar'
@@ -120,6 +122,15 @@ export function Sidebar({
           >
             <GraduationCap className="h-4 w-4" />
             <span className={cn(collapsed && 'sr-only')}>GPA Calculator</span>
+          </Link>
+
+          <Link
+            to="/final-exam"
+            className={navLinkClass(isFinalExamActive)}
+            title="Final Exam"
+          >
+            <ClipboardPenLine className="h-4 w-4" />
+            <span className={cn(collapsed && 'sr-only')}>Final Exam</span>
           </Link>
 
           <SignedIn>
