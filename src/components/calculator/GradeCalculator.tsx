@@ -333,6 +333,7 @@ export function GradeCalculator({
   const currentAverage = result?.averageOnCompletedWork ?? null
   const projectedGrade = result?.overallCoursePercentSoFar ?? null
   const neededOnRemaining = result?.neededGrade ?? null
+  const showOverallSection = result ? result.totalWeight <= 100 : false
 
   const formatPercent = (value: number | null) =>
     value === null ? '—' : `${value.toFixed(1)}%`
@@ -485,7 +486,7 @@ export function GradeCalculator({
 
             {result && (
               <div className="border-t border-border/70 pt-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className={`grid gap-4 ${showOverallSection ? 'grid-cols-2' : 'grid-cols-1'}`}>
                   <div className="rounded-xl border border-border/70 bg-card/90 px-4 py-3.5">
                     <div className="text-[0.72rem] leading-[1.35] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                       Current average
@@ -494,14 +495,16 @@ export function GradeCalculator({
                       {formatPercent(currentAverage)}
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/70 bg-card/90 px-4 py-3.5">
-                    <div className="text-[0.72rem] leading-[1.35] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                      Overall
+                  {showOverallSection && (
+                    <div className="rounded-xl border border-border/70 bg-card/90 px-4 py-3.5">
+                      <div className="text-[0.72rem] leading-[1.35] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        Overall
+                      </div>
+                      <div className="mt-6 text-4xl font-semibold leading-none text-foreground">
+                        {formatPercent(projectedGrade)}
+                      </div>
                     </div>
-                    <div className="mt-6 text-4xl font-semibold leading-none text-foreground">
-                      {formatPercent(projectedGrade)}
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="mt-3 rounded-xl border border-primary/15 bg-primary/5 px-4 py-4.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
