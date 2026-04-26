@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SignInButton } from '@clerk/clerk-react'
 import {
   Select,
@@ -10,7 +10,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Plus, Check, Pencil, Trash2, X } from 'lucide-react'
+import { Plus, Check, Pencil, Trash2, X, MoreHorizontal } from 'lucide-react'
 import type { Course } from './types'
 
 interface CourseSelectorProps {
@@ -37,15 +37,39 @@ export function CourseSelector({
   const [newCourseName, setNewCourseName] = useState('')
   const [editedCourseName, setEditedCourseName] = useState('')
   const [isWorking, setIsWorking] = useState(false)
+  const [isManageOpen, setIsManageOpen] = useState(false)
+  const manageMenuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (isSignedIn) return
     setIsCreating(false)
     setIsEditing(false)
+    setIsManageOpen(false)
     setNewCourseName('')
     setEditedCourseName('')
     setIsWorking(false)
   }, [isSignedIn])
+
+  useEffect(() => {
+    if (!isManageOpen) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!manageMenuRef.current?.contains(event.target as Node)) {
+        setIsManageOpen(false)
+      }
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsManageOpen(false)
+    }
+
+    window.addEventListener('mousedown', handlePointerDown)
+    window.addEventListener('keydown', handleEscape)
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown)
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [isManageOpen])
 
   const selectedCourse =
     selectedCourseId ? courses.find((c) => c._id === selectedCourseId) : null
@@ -60,6 +84,7 @@ export function CourseSelector({
       await onCreateCourse(name)
       setNewCourseName('')
       setIsCreating(false)
+      setIsManageOpen(false)
     } finally {
       setIsWorking(false)
     }
@@ -74,6 +99,7 @@ export function CourseSelector({
       setIsWorking(true)
       await onRenameCourse(selectedCourseId, name)
       setIsEditing(false)
+      setIsManageOpen(false)
     } finally {
       setIsWorking(false)
     }
@@ -94,6 +120,7 @@ export function CourseSelector({
       setIsWorking(true)
       await onDeleteCourse(selectedCourseId)
       onSelectCourse(null)
+      setIsManageOpen(false)
     } finally {
       setIsWorking(false)
     }
@@ -203,48 +230,80 @@ export function CourseSelector({
       </Select>
 
       {isSignedIn ? (
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setIsCreating(true)}
-          disabled={isWorking}
-        >
-          <span className="sr-only">Add course</span>
-          <Plus className="h-4 w-4" />
-        </Button>
+        <div ref={manageMenuRef} className="relative">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsManageOpen((open) => !open)}
+            disabled={isWorking}
+            aria-expanded={isManageOpen}
+            aria-haspopup="menu"
+            className="min-w-[7rem] justify-center gap-1.5 text-primary"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+            Manage
+          </Button>
+
+          {isManageOpen && (
+            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-[12.75rem] rounded-xl border border-border/80 bg-card p-1.5 shadow-[0_14px_30px_rgba(15,23,42,0.1)]">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsManageOpen(false)
+                  setIsCreating(true)
+                }}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent/35"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Plus className="h-4 w-4" />
+                </span>
+                <span className="font-medium">Add course</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!selectedCourseId || !onRenameCourse) return
+                  setEditedCourseName(selectedCourse?.name ?? '')
+                  setIsEditing(true)
+                  setIsManageOpen(false)
+                }}
+                disabled={!selectedCourseId || !onRenameCourse || isWorking}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent/35 disabled:pointer-events-none disabled:opacity-45"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Pencil className="h-4 w-4" />
+                </span>
+                <span className="font-medium">Rename course</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteCourse}
+                disabled={!selectedCourseId || !onDeleteCourse || isWorking}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left text-sm text-destructive transition-colors hover:bg-destructive/6 disabled:pointer-events-none disabled:opacity-45"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </span>
+                <span className="font-medium">Delete course</span>
+              </button>
+            </div>
+          )}
+        </div>
       ) : (
         <SignInButton mode="modal">
-          <Button variant="outline" size="icon" disabled={isWorking}>
-            <span className="sr-only">Sign in to add a course</span>
-            <Plus className="h-4 w-4" />
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isWorking}
+            className="min-w-[7rem] justify-center gap-1.5 text-primary"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+            Manage
           </Button>
         </SignInButton>
       )}
-
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => {
-          if (!selectedCourseId) return
-          setEditedCourseName(selectedCourse?.name ?? '')
-          setIsEditing(true)
-        }}
-        disabled={!isSignedIn || !selectedCourseId || !onRenameCourse || isWorking}
-      >
-        <span className="sr-only">Edit course name</span>
-        <Pencil className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleDeleteCourse}
-        disabled={!isSignedIn || !selectedCourseId || !onDeleteCourse || isWorking}
-        className="text-destructive hover:text-destructive"
-      >
-        <span className="sr-only">Delete course</span>
-        <Trash2 className="h-4 w-4" />
-      </Button>
     </div>
   )
 }
