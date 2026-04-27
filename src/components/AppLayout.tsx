@@ -56,7 +56,7 @@ function ShellLayout({ children }: { children: React.ReactNode }) {
       />
       <main
         className={cn(
-          'flex-1 transition-[margin] duration-200',
+          'flex-1 transition-[margin] duration-300 ease-out',
           effectiveSidebarCollapsed ? 'ml-16' : 'ml-60'
         )}
       >
