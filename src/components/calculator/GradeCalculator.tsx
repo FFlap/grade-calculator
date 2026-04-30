@@ -51,6 +51,14 @@ function createEmptyRow(): GradeRow {
   }
 }
 
+function matchesDefaultThresholds(thresholds: LetterGradeThreshold[]) {
+  return LETTER_GRADE_THRESHOLDS.every(
+    (threshold, index) =>
+      threshold.letter === thresholds[index]?.letter &&
+      threshold.min === thresholds[index]?.min
+  )
+}
+
 export function GradeCalculator({
   isSignedIn,
   courses,
@@ -69,11 +77,19 @@ export function GradeCalculator({
   const [targetGrade, setTargetGrade] = useState('80')
   const [result, setResult] = useState<CalculationResult | null>(null)
   const [invalidMessage, setInvalidMessage] = useState<string | null>(null)
+  const [localLetterGradeThresholds, setLocalLetterGradeThresholds] =
+    useState<LetterGradeThreshold[] | null>(null)
 
   const selectedCourse = useMemo(
     () => (selectedCourseId ? courses.find((c) => c._id === selectedCourseId) ?? null : null),
     [courses, selectedCourseId]
   )
+
+  const activeLetterGradeThresholds =
+    selectedCourse?.letterGradeThresholds ?? localLetterGradeThresholds ?? undefined
+  const hasCustomLetterScale = selectedCourse
+    ? Boolean(selectedCourse.letterGradeThresholds)
+    : Boolean(localLetterGradeThresholds)
 
   const savedGrades = useQuery(
     api.grades.listByCourse,
@@ -182,8 +198,8 @@ export function GradeCalculator({
 
   useEffect(() => {
     if (!isEditingScale) return
-    setScaleDraft(selectedCourse?.letterGradeThresholds ?? LETTER_GRADE_THRESHOLDS)
-  }, [isEditingScale, selectedCourse])
+    setScaleDraft(activeLetterGradeThresholds ?? LETTER_GRADE_THRESHOLDS)
+  }, [activeLetterGradeThresholds, isEditingScale])
 
   const saveTimeoutsRef = useRef<Map<string, number>>(new Map())
   const targetGradeSaveTimeoutsRef = useRef<Map<string, number>>(new Map())
@@ -300,10 +316,10 @@ export function GradeCalculator({
       buildResult(
         rows,
         targetGradeValue,
-        selectedCourse?.letterGradeThresholds
+        activeLetterGradeThresholds
       )
     )
-  }, [buildResult, rows, selectedCourse?.letterGradeThresholds, targetGrade])
+  }, [activeLetterGradeThresholds, buildResult, rows, targetGrade])
 
   const handleTargetGradeChange = useCallback(
     (value: string) => {
@@ -384,106 +400,113 @@ export function GradeCalculator({
               </div>
             </div>
 
-            {isSignedIn && selectedCourseId && onUpdateLetterGradeThresholds && (
-              <div className="space-y-3 border-t border-border/70 pt-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm">
-                    <span className="font-medium text-foreground">Letter scale</span>{' '}
-                    <span className="text-muted-foreground">
-                      {selectedCourse?.letterGradeThresholds ? 'Custom' : 'Default'}
-                    </span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditingScale((v) => !v)}
-                  >
-                    <SlidersHorizontal className="h-4 w-4" />
-                    {isEditingScale ? 'Close' : 'Customize'}
-                  </Button>
+            <div className="space-y-3 border-t border-border/70 pt-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-sm">
+                  <span className="font-medium text-foreground">Letter scale</span>{' '}
+                  <span className="text-muted-foreground">
+                    {hasCustomLetterScale ? 'Custom' : 'Default'}
+                  </span>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditingScale((v) => !v)}
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  {isEditingScale ? 'Close' : 'Customize'}
+                </Button>
+              </div>
 
-                {isEditingScale && (
-                  <div className="space-y-3 rounded-xl border border-border/70 bg-muted/25 p-3.5">
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {scaleDraft.map((t, idx) => (
-                        <div key={t.letter} className="flex items-center gap-2">
-                          <div className="w-8 text-sm font-medium text-foreground">
-                            {t.letter}
-                          </div>
-                          <Input
-                            type="text"
-                            inputMode="decimal"
-                            value={t.min}
-                            disabled={t.letter.toUpperCase() === 'F'}
-                            onChange={(e) => {
-                              const value = Number(sanitizeNumberInput(e.target.value))
-                              setScaleDraft((prev) =>
-                                prev.map((p, i) =>
-                                  i === idx
-                                    ? { ...p, min: Number.isFinite(value) ? value : p.min }
-                                    : p
-                                )
-                              )
-                            }}
-                            className="h-8"
-                          />
+              {isEditingScale && (
+                <div className="space-y-3 rounded-xl border border-border/70 bg-muted/25 p-3.5">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {scaleDraft.map((t, idx) => (
+                      <div key={t.letter} className="flex items-center gap-2">
+                        <div className="w-8 text-sm font-medium text-foreground">
+                          {t.letter}
                         </div>
-                      ))}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setScaleDraft(LETTER_GRADE_THRESHOLDS)}
-                        disabled={isSavingScale}
-                      >
-                        Reset to default
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={async () => {
-                          const normalized = [...scaleDraft]
-                            .map((t) => ({
-                              letter: t.letter.trim(),
-                              min: Math.max(0, Math.min(100, Number(t.min) || 0)),
-                            }))
-                            .map((t) =>
-                              t.letter.toUpperCase() === 'F' ? { ...t, min: 0 } : t
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={t.min}
+                          disabled={t.letter.toUpperCase() === 'F'}
+                          onChange={(e) => {
+                            const value = Number(sanitizeNumberInput(e.target.value))
+                            setScaleDraft((prev) =>
+                              prev.map((p, i) =>
+                                i === idx
+                                  ? { ...p, min: Number.isFinite(value) ? value : p.min }
+                                  : p
+                              )
                             )
+                          }}
+                          className="h-8"
+                        />
+                      </div>
+                    ))}
+                  </div>
 
-                          const byLetter = new Map(normalized.map((t) => [t.letter, t]))
-                          const ordered = LETTER_GRADE_THRESHOLDS.map(
-                            (t) => byLetter.get(t.letter) ?? t
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setScaleDraft(LETTER_GRADE_THRESHOLDS)}
+                      disabled={isSavingScale}
+                    >
+                      Reset to default
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        const normalized = [...scaleDraft]
+                          .map((t) => ({
+                            letter: t.letter.trim(),
+                            min: Math.max(0, Math.min(100, Number(t.min) || 0)),
+                          }))
+                          .map((t) =>
+                            t.letter.toUpperCase() === 'F' ? { ...t, min: 0 } : t
                           )
-                          const isDescending = ordered.every(
-                            (t, i) => i === 0 || ordered[i - 1]!.min >= t.min
-                          )
-                          if (!isDescending) {
-                            window.alert(
-                              'Thresholds must be in descending order (A+ ≥ A ≥ ... ≥ F).'
-                            )
-                            return
-                          }
 
-                          try {
+                        const byLetter = new Map(normalized.map((t) => [t.letter, t]))
+                        const ordered = LETTER_GRADE_THRESHOLDS.map(
+                          (t) => byLetter.get(t.letter) ?? t
+                        )
+                        const isDescending = ordered.every(
+                          (t, i) => i === 0 || ordered[i - 1]!.min >= t.min
+                        )
+                        if (!isDescending) {
+                          window.alert(
+                            'Thresholds must be in descending order (A+ ≥ A ≥ ... ≥ F).'
+                          )
+                          return
+                        }
+
+                        try {
+                          if (isSignedIn && selectedCourseId && onUpdateLetterGradeThresholds) {
                             setIsSavingScale(true)
                             await onUpdateLetterGradeThresholds(selectedCourseId, ordered)
-                            setIsEditingScale(false)
-                          } finally {
+                          } else {
+                            setLocalLetterGradeThresholds(
+                              matchesDefaultThresholds(ordered) ? null : ordered
+                            )
+                          }
+                          setResult(null)
+                          setIsEditingScale(false)
+                        } finally {
+                          if (isSignedIn && selectedCourseId && onUpdateLetterGradeThresholds) {
                             setIsSavingScale(false)
                           }
-                        }}
-                        disabled={isSavingScale}
-                      >
-                        Save scale
-                      </Button>
-                    </div>
+                        }
+                      }}
+                      disabled={isSavingScale}
+                    >
+                      Save scale
+                    </Button>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
 
             {result && (
               <div className="border-t border-border/70 pt-6">
