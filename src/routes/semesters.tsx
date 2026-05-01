@@ -21,8 +21,6 @@ import {
   CalendarPlus,
   CalendarCheck2,
   ChevronDown,
-  Coins,
-  GraduationCap,
   Plus,
   Settings,
   Trash2,
@@ -107,15 +105,6 @@ function SemestersPage() {
     }
   }, [currentSemester, sortedSemesters])
 
-  useEffect(() => {
-    if (!currentSemester) return
-    const currentId = String(currentSemester._id)
-    setOpenSemesterIds((prev) => {
-      if (prev.has(currentId)) return prev
-      return new Set([...prev, currentId])
-    })
-  }, [currentSemester])
-
   const [settingsSemesterId, setSettingsSemesterId] = useState<string | null>(null)
   const [semesterSettingsName, setSemesterSettingsName] = useState('')
   const [isSemesterSettingsWorking, setIsSemesterSettingsWorking] = useState(false)
@@ -167,11 +156,6 @@ function SemestersPage() {
   const getCourseLetter = (course: Course, percent: number) => {
     const thresholds = course.letterGradeThresholds ?? LETTER_GRADE_THRESHOLDS
     return percentageToLetter(percent, thresholds)
-  }
-
-  const getTermCredits = (semesterId: string) => {
-    const termCourses = coursesBySemesterId.get(semesterId) ?? []
-    return termCourses.reduce((sum, c) => sum + getCourseCredits(c), 0)
   }
 
   const getTermGpa = (semesterId: string) => {
@@ -423,29 +407,45 @@ function SemestersPage() {
         onDragStart={(event) => handleCourseDragStart(event, courseId)}
         onDragEnd={handleCourseDragEnd}
         className={cn(
-          'flex cursor-grab items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 active:cursor-grabbing',
+          'grid cursor-grab grid-cols-[minmax(12rem,1fr)_4rem_7rem_8rem_2.5rem] items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/12 active:cursor-grabbing',
           draggingCourseId === courseId && 'opacity-50'
         )}
       >
         <div className="min-w-0 flex-1">
-          <div className="font-medium text-foreground truncate">{course.name}</div>
-          <div className="text-xs text-muted-foreground">
-            <span className="mr-2">{getCourseCredits(course)} credits</span>
-          </div>
+          <Link
+            to="/grade-calculator/$courseId"
+            params={{ courseId: course._id }}
+            className="truncate font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            {course.name}
+          </Link>
         </div>
 
-        <div className="text-right">
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            Grade
-          </div>
-          <div className="text-sm font-semibold text-foreground">
-            {percent === null || letter === null
-              ? '—'
-              : `${letter} (${Math.round(percent)}%)`}
-          </div>
+        <div className="text-center text-sm text-foreground">
+          {getCourseCredits(course)}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="text-center">
+          <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+            {percent === null || letter === null ? '—' : `${letter} (${Math.round(percent)}%)`}
+          </span>
+        </div>
+
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 rounded-xl px-3"
+            asChild
+          >
+            <Link to="/grade-calculator/$courseId" params={{ courseId: course._id }}>
+              Open course
+            </Link>
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-end gap-1">
           <Button
             type="button"
             variant="ghost"
@@ -457,26 +457,21 @@ function SemestersPage() {
             <Settings className="h-4 w-4" />
           </Button>
 
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/grade-calculator/$courseId" params={{ courseId: course._id }}>
-              Go to Course
-            </Link>
-          </Button>
+          {options.showAssignToCurrent && currentSemester && (
+            <Button
+              size="icon-sm"
+              onClick={() =>
+                updateCourseSemester({
+                  id: course._id,
+                  semesterId: currentSemester._id,
+                })
+              }
+              title={`Assign to ${currentSemester.name}`}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
         </div>
-
-        {options.showAssignToCurrent && currentSemester && (
-          <Button
-            size="sm"
-            onClick={() =>
-              updateCourseSemester({
-                id: course._id,
-                semesterId: currentSemester._id,
-              })
-            }
-          >
-            Assign to {currentSemester.name}
-          </Button>
-        )}
       </div>
     )
   }
@@ -484,7 +479,6 @@ function SemestersPage() {
   const semesterCards = sortedSemesters.map((semester) => {
     const semId = String(semester._id)
     const isOpen = openSemesterIds.has(semId)
-    const termCredits = getTermCredits(semId)
     const termGpa = getTermGpa(semId)
 
     const termCourses = coursesBySemesterId.get(semId) ?? []
@@ -493,7 +487,7 @@ function SemestersPage() {
       semester.isCurrent || semester.status === 'in_progress' ? 'IN PROGRESS' : 'COMPLETED'
 
     return (
-      <Card
+      <section
         key={semId}
         onDragOver={(event) => handleCourseDragOver(event, semId)}
         onDragLeave={(event) => {
@@ -503,9 +497,8 @@ function SemestersPage() {
         }}
         onDrop={(event) => handleCourseDrop(event, semId)}
         className={cn(
-          'border-border overflow-hidden py-0 gap-0 transition-colors',
-          dragOverSemesterId === semId && 'border-primary/60 bg-primary/5',
-          semester.isCurrent && 'ring-1 ring-ring/35'
+          'overflow-hidden rounded-xl border border-[#e1e5ea] bg-white transition-colors',
+          dragOverSemesterId === semId && 'border-primary/30 bg-[#f7f9fb]'
         )}
       >
         <button
@@ -523,19 +516,16 @@ function SemestersPage() {
               return next
             })
           }}
-          className={cn(
-            'w-full text-left px-5 py-4 flex items-center gap-4 border-b border-border/60',
-            semester.isCurrent ? 'bg-accent/10' : 'bg-card'
-          )}
+          className="flex w-full items-center gap-4 bg-[#f7f9fb] px-4 py-4 text-left transition-colors hover:bg-[#f0f4f7]"
         >
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3">
-              <div className="text-lg font-semibold text-foreground truncate">
+              <div className="text-base font-semibold tracking-tight text-foreground truncate">
                 {semester.name}
               </div>
               <span
                 className={cn(
-                  'text-xs font-semibold tracking-wide px-2 py-1 rounded-full border',
+                  'rounded-full border px-2 py-0.5 text-xs font-semibold tracking-wide',
                   semester.status === 'completed'
                     ? 'bg-muted text-muted-foreground border-border'
                     : 'bg-primary/10 text-primary border-primary/20'
@@ -545,25 +535,14 @@ function SemestersPage() {
               </span>
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
-              {semester.isCurrent ? 'Current term' : semester.status === 'completed' ? 'Previous term' : 'In progress'}
+              {termCourses.length} courses
             </div>
           </div>
 
           <div className="hidden sm:flex items-center gap-6">
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Term GPA
-              </div>
               <div className="text-sm font-semibold text-foreground">
-                {termGpa === null ? '—' : termGpa.toFixed(2)}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Credits
-              </div>
-              <div className="text-sm font-semibold text-foreground">
-                {termCredits}
+                {termGpa === null ? '— GPA' : `${termGpa.toFixed(2)} GPA`}
               </div>
             </div>
           </div>
@@ -596,15 +575,19 @@ function SemestersPage() {
         </button>
 
         {isOpen && (
-          <CardContent className="p-5">
-            <div className="space-y-3">
-              <div className="text-xs font-semibold tracking-wide text-muted-foreground">
-                COURSE BREAKDOWN
+          <div className="pb-5">
+            <div className="min-w-[42rem]">
+              <div className="grid grid-cols-[minmax(12rem,1fr)_4rem_7rem_8rem_2.5rem] gap-3 border-y border-[#e8ebef] bg-[#fbfcfd] px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                <span>Course</span>
+                <span className="text-center">Credits</span>
+                <span className="text-center">Grade</span>
+                <span className="text-center">Action</span>
+                <span></span>
               </div>
 
-              <div className="space-y-2">
+              <div className="divide-y divide-[#edf0f3]">
                 {termCourses.length === 0 ? (
-                  <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+                  <div className="px-4 py-5 text-sm text-muted-foreground">
                     No courses in this semester yet.
                   </div>
                 ) : (
@@ -612,12 +595,9 @@ function SemestersPage() {
                 )}
               </div>
 
-              <div className="pt-3 border-t border-border/60">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm text-muted-foreground">
-                    Add courses to this semester.
-                  </div>
+              <div className="px-4 pt-3">
                   <Button
+                    variant="outline"
                     onClick={() => {
                       setIsAddCourseOpen(true)
                       setAddCourseSemesterId(semId)
@@ -627,22 +607,22 @@ function SemestersPage() {
                       setSettingsSemesterId(null)
                       setSettingsCourseId(null)
                     }}
+                    className="h-11 w-full rounded-xl border-dashed border-border/80 bg-card hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Course
+                    Add course
                   </Button>
-                </div>
               </div>
             </div>
-          </CardContent>
+          </div>
         )}
-      </Card>
+      </section>
     )
   })
 
   const unassignedCourses = coursesBySemesterId.get('unassigned') ?? []
   const unassignedCard = unassignedCourses.length > 0 ? (
-    <Card
+    <section
       onDragOver={(event) => handleCourseDragOver(event, 'unassigned')}
       onDragLeave={(event) => {
         const nextTarget = event.relatedTarget
@@ -651,29 +631,38 @@ function SemestersPage() {
       }}
       onDrop={(event) => handleCourseDrop(event, 'unassigned')}
       className={cn(
-        'border-border overflow-hidden py-0 gap-0 transition-colors',
-        dragOverSemesterId === 'unassigned' && 'border-primary/60 bg-primary/5'
+          'overflow-hidden rounded-xl border border-[#e1e5ea] bg-white transition-colors',
+        dragOverSemesterId === 'unassigned' && 'border-primary/30 bg-[#f7f9fb]'
       )}
     >
-      <div className="px-5 py-4 border-b border-border/60 bg-card">
+      <div className="bg-[#f7f9fb] px-4 py-4">
         <div className="flex items-center gap-3">
-          <div className="text-lg font-semibold text-foreground">Unassigned</div>
-          <span className="text-xs font-semibold tracking-wide px-2 py-1 rounded-full border bg-muted text-muted-foreground border-border">
+          <div className="text-base font-semibold tracking-tight text-foreground">Unassigned</div>
+          <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-semibold tracking-wide text-muted-foreground">
             NEEDS SEMESTER
           </span>
         </div>
         <div className="mt-1 text-xs text-muted-foreground">
-          Courses created outside the Semesters page.
+          Courses created outside a semester.
         </div>
       </div>
-      <CardContent className="p-5">
-        <div className="space-y-2">
-          {unassignedCourses.map((course) =>
-            renderCourseRow(course, { showAssignToCurrent: true })
-          )}
+      <div className="pb-5">
+        <div className="min-w-[42rem]">
+          <div className="grid grid-cols-[minmax(12rem,1fr)_4rem_7rem_8rem_2.5rem] gap-3 border-y border-[#e8ebef] bg-[#fbfcfd] px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <span>Course</span>
+            <span className="text-center">Credits</span>
+            <span className="text-center">Grade</span>
+            <span className="text-center">Action</span>
+            <span></span>
+          </div>
+          <div className="divide-y divide-[#edf0f3]">
+            {unassignedCourses.map((course) =>
+              renderCourseRow(course, { showAssignToCurrent: true })
+            )}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   ) : null
 
   return (
@@ -1021,90 +1010,111 @@ function SemestersPage() {
         <div className="app-page-header-inner">
           <div className="app-page-title-row">
             <div>
-              <h1 className="app-page-title">Academic Semesters</h1>
+              <h1 className="app-page-title">Semesters</h1>
               <p className="app-page-subtitle">
                 Manage terms, credits, course placement, and academic progress.
               </p>
             </div>
-            <Button
-              onClick={() => {
-                setIsAddSemesterOpen(true)
-                setSettingsSemesterId(null)
-                setIsAddCourseOpen(false)
-                setSettingsCourseId(null)
-              }}
-            >
-              <CalendarPlus className="h-4 w-4 mr-2" />
-              Add Semester
-            </Button>
           </div>
         </div>
       </section>
 
       <main className="app-page-body">
         <div className="app-page-body-narrow">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-          <Card className="border-border">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                <GraduationCap className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Cumulative GPA
-                </div>
-                <div className="text-xl font-semibold text-foreground">
-                  {cumulative.gpa === null ? '—' : cumulative.gpa.toFixed(2)}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid items-start gap-7 lg:grid-cols-[22.5rem_minmax(0,1fr)] xl:gap-8">
+            <div className="space-y-5">
+              <Card className="border-border/70 py-0 gap-0 overflow-hidden rounded-2xl">
+                <CardContent className="space-y-6 p-6">
+                  <div>
+                    <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                      Overall Summary
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Track cumulative progress across every semester.
+                    </p>
+                  </div>
 
-          <Card className="border-border">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-accent/15 border border-border flex items-center justify-center">
-                <Coins className="h-5 w-5 text-foreground/70" />
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Total Credits
-                </div>
-                <div className="text-xl font-semibold text-foreground">
-                  {cumulative.credits}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="border-t border-border/70 pt-6">
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-5xl font-semibold leading-none text-primary">
+                          {cumulative.gpa === null ? '—' : cumulative.gpa.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        Overall GPA
+                      </div>
+                    </div>
 
-          <Card className="border-border">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-muted border border-border flex items-center justify-center">
-                <CalendarCheck2 className="h-5 w-5 text-foreground/70" />
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Semesters Completed
-                </div>
-                <div className="text-xl font-semibold text-foreground">
-                  {cumulative.semestersCompleted}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                    <div className="mt-5 border-t border-border/70 pt-5">
+                      <div className="text-3xl font-semibold leading-none text-foreground">
+                        {cumulative.credits}
+                      </div>
+                      <div className="mt-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        Credits taken
+                      </div>
+                    </div>
 
-        <div className="space-y-4">
-          {unassignedCard}
-          {semesterCards.length > 0 ? (
-            semesterCards
-          ) : (
-            <Card className="border-border">
-              <CardContent className="p-6 text-center text-muted-foreground">
-                Create your first semester to start organizing courses.
+                    <div className="mt-5 border-t border-border/70 pt-5">
+                      <div className="text-3xl font-semibold leading-none text-foreground">
+                        {courses.length}
+                      </div>
+                      <div className="mt-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        Total courses
+                      </div>
+                    </div>
+
+                  </div>
+
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="border-border/70 py-0 gap-0 overflow-hidden rounded-2xl">
+              <CardContent className="p-0">
+                <div className="border-b border-border/70 px-6 py-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                        All Semesters
+                      </h2>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        View your courses grouped by semester.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CalendarCheck2 className="h-4 w-4" />
+                      {cumulative.semestersCompleted} completed
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 overflow-x-auto p-4">
+                  {unassignedCard}
+                  {semesterCards.length > 0 ? (
+                    semesterCards
+                  ) : (
+                    <div className="rounded-xl border border-border/70 px-6 py-8 text-center text-sm text-muted-foreground">
+                      Create your first semester to start organizing courses.
+                    </div>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsAddSemesterOpen(true)
+                      setSettingsSemesterId(null)
+                      setIsAddCourseOpen(false)
+                      setSettingsCourseId(null)
+                    }}
+                    className="h-11 w-full rounded-xl border-dashed border-border/80 bg-card hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add semester
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-          )}
-        </div>
+          </div>
         </div>
       </main>
     </div>
