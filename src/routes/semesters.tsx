@@ -539,13 +539,15 @@ function SemestersPage() {
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-6">
-            <div className="text-right">
-              <div className="text-sm font-semibold text-foreground">
-                {termGpa === null ? '— GPA' : `${termGpa.toFixed(2)} GPA`}
+          {termGpa !== null && (
+            <div className="hidden sm:flex items-center gap-6">
+              <div className="text-right">
+                <div className="text-sm font-semibold text-foreground">
+                  {termGpa.toFixed(2)} GPA
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <Button
             type="button"
