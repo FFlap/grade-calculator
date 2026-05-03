@@ -6,10 +6,9 @@ import { api } from '../../convex/_generated/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Calendar, ChevronLeft, ChevronRight, Dot, Filter } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   formatGradeInputForDisplay,
-  type Course,
   type Grade,
 } from '@/components/calculator/types'
 import {
@@ -40,7 +39,8 @@ function isSameISODate(a: string, b: string) {
 
 function parseISODate(iso: string) {
   const [y, m, d] = iso.split('-').map((v) => Number(v))
-  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d))
+    return null
   const dt = new Date(y, m - 1, d)
   if (Number.isNaN(dt.getTime())) return null
   return dt
@@ -54,7 +54,9 @@ function normalizeToISODate(value: string) {
 
   const parsed = new Date(trimmed)
   if (Number.isNaN(parsed.getTime())) return null
-  return toISODate(new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()))
+  return toISODate(
+    new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()),
+  )
 }
 
 function formatMonthLabel(d: Date) {
@@ -70,12 +72,6 @@ function formatDayLabel(iso: string) {
     day: 'numeric',
     year: 'numeric',
   })
-}
-
-function formatSidebarDayLabel(iso: string) {
-  const dt = parseISODate(iso)
-  if (!dt) return iso
-  return dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
 function formatRangeLabel(startISO: string, endISO: string) {
@@ -106,22 +102,17 @@ function isCompletedAssessment(a: CalendarAssessment) {
 function CalendarPage() {
   const { isLoaded, isSignedIn } = useUser()
 
-  const coursesData = useQuery(api.courses.list) as Course[] | undefined
-  const courses = coursesData ?? []
-  const datedGradesData = useQuery(api.grades.listDated) as CalendarAssessment[] | undefined
+  const datedGradesData = useQuery(api.grades.listDated) as
+    | CalendarAssessment[]
+    | undefined
   const dated = datedGradesData ?? []
 
   const [monthCursor, setMonthCursor] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
   })
-  const [activeCourseId, setActiveCourseId] = useState<string>('all')
   const [openDayISO, setOpenDayISO] = useState<string | null>(null)
-
-  const filtered = useMemo(() => {
-    if (activeCourseId === 'all') return dated
-    return dated.filter((d) => String(d.courseId ?? '') === activeCourseId)
-  }, [activeCourseId, dated])
+  const filtered = dated
 
   const byDate = useMemo(() => {
     const map = new Map<string, CalendarAssessment[]>()
@@ -173,36 +164,27 @@ function CalendarPage() {
       })
   }, [filtered, todayISO, upcomingEndISO])
 
-  const activeCourseLabel = useMemo(() => {
-    if (activeCourseId === 'all') return 'All courses'
-    const match = courses.find((c) => String(c._id) === activeCourseId)
-    return match?.name ?? 'Selected course'
-  }, [activeCourseId, courses])
+  const thisWeekEndISO = useMemo(() => {
+    const start = parseISODate(todayISO)
+    if (!start) return upcomingEndISO
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+    end.setDate(end.getDate() + 7)
+    return toISODate(end)
+  }, [todayISO, upcomingEndISO])
 
-  const upcomingByDate = useMemo(() => {
-    const map = new Map<string, CalendarAssessment[]>()
-    for (const e of upcoming) {
-      const key = e.dueDate
-      const list = map.get(key)
-      if (list) list.push(e)
-      else map.set(key, [e])
-    }
-    for (const [k, list] of map) {
-      list.sort((a, b) => {
-        const courseCmp = (a.courseName ?? '').localeCompare(b.courseName ?? '')
-        if (courseCmp !== 0) return courseCmp
-        const nameA = (a.assignmentName ?? '').trim() || 'Assessment'
-        const nameB = (b.assignmentName ?? '').trim() || 'Assessment'
-        return nameA.localeCompare(nameB)
-      })
-      map.set(k, list)
-    }
-    return map
-  }, [upcoming])
+  const thisWeekCount = useMemo(() => {
+    return upcoming.filter(
+      (item) => item.dueDate >= todayISO && item.dueDate <= thisWeekEndISO,
+    ).length
+  }, [thisWeekEndISO, todayISO, upcoming])
 
-  const upcomingDates = useMemo(() => {
-    return [...upcomingByDate.keys()].sort((a, b) => a.localeCompare(b))
-  }, [upcomingByDate])
+  const currentMonthCount = useMemo(() => {
+    const monthPrefix = `${monthCursor.getFullYear()}-${pad2(monthCursor.getMonth() + 1)}`
+    return filtered.reduce((count, item) => {
+      const iso = normalizeToISODate(item.dueDate)
+      return iso?.startsWith(monthPrefix) ? count + 1 : count
+    }, 0)
+  }, [filtered, monthCursor])
 
   const grid = useMemo(() => {
     const year = monthCursor.getFullYear()
@@ -223,6 +205,17 @@ function CalendarPage() {
   }, [monthCursor])
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const monthOptions = Array.from({ length: 12 }, (_, monthIndex) => ({
+    value: String(monthIndex),
+    label: new Date(
+      monthCursor.getFullYear(),
+      monthIndex,
+      1,
+    ).toLocaleDateString(undefined, {
+      month: 'long',
+      year: 'numeric',
+    }),
+  }))
 
   return (
     <div className="app-page">
@@ -232,295 +225,345 @@ function CalendarPage() {
             <div>
               <h1 className="app-page-title">Calendar</h1>
               <p className="app-page-subtitle">
-                Track assessment dates, upcoming work, and course-specific deadlines.
+                Plan deadlines, exams, and course milestones.
               </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                className="rounded-md"
-                onClick={() =>
-                  setMonthCursor((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
-                }
-                aria-label="Previous month"
-                title="Previous month"
-              >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Prev
-              </Button>
-              <Button
-                variant="outline"
-                className="rounded-md"
-                onClick={() =>
-                  setMonthCursor((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
-                }
-                aria-label="Next month"
-                title="Next month"
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-              <Button
-                className="rounded-md"
-                onClick={() => {
-                  const now = new Date()
-                  setMonthCursor(new Date(now.getFullYear(), now.getMonth(), 1))
-                }}
-                aria-label="Jump to current month"
-                title="Today"
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                Today
-              </Button>
             </div>
           </div>
         </div>
       </section>
 
-      <main className="app-page-body space-y-6">
-        <Card className="border-border py-0 rounded-lg">
-          <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Month
-                </div>
-                <div className="text-lg font-semibold text-foreground">
-                  {formatMonthLabel(monthCursor)}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <Select
-                value={activeCourseId}
-                onValueChange={(v) => setActiveCourseId(v)}
-              >
-                <SelectTrigger className="w-64 rounded-md">
-                  <SelectValue placeholder="All courses" />
-                </SelectTrigger>
-                <SelectContent className="rounded-md">
-                  <SelectItem value="all">All courses</SelectItem>
-                  {courses.map((c) => (
-                    <SelectItem key={String(c._id)} value={String(c._id)}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
+      <main className="px-6 py-6">
         {!isLoaded ? null : !isSignedIn ? (
-          <Card className="border-border rounded-lg">
-            <CardContent className="p-8 text-center">
-              <div className="mx-auto h-12 w-12 rounded-xl bg-accent/30 border border-border flex items-center justify-center mb-4">
+          <Card className="mx-auto max-w-2xl rounded-2xl border-border/70 py-0">
+            <CardContent className="p-10 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                 <Calendar className="h-6 w-6 text-foreground/70" />
               </div>
-              <div className="text-lg font-semibold text-foreground mb-1">
+              <div className="mb-1 text-lg font-semibold text-foreground">
                 Sign in to use the calendar
               </div>
               <div className="text-sm text-muted-foreground">
-                Assessment dates are saved to your account, so you’ll need to sign in to see them here.
+                Assessment dates are saved to your account, so you’ll need to
+                sign in to see them here.
               </div>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 items-start">
-            <div className="min-w-0">
-              <Card className="border-border overflow-hidden py-0 gap-0 rounded-lg">
-                <div className="grid grid-cols-7 bg-card border-b border-border/60">
-                  {weekDays.map((d) => (
-                    <div
-                      key={d}
-                      className="px-3 py-2 text-xs font-semibold tracking-wide text-muted-foreground"
-                    >
-                      {d}
+          <div className="grid w-full items-start gap-6 lg:grid-cols-[20.5rem_minmax(0,1fr)]">
+            <aside className="space-y-5">
+              <Card className="overflow-hidden rounded-2xl border-[#dfe4ea] bg-white py-0 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                <CardContent className="space-y-6 p-6">
+                  <div>
+                    <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                      Upcoming
+                    </h2>
+                  </div>
+
+                  <div>
+                    <div className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      Next deadline
                     </div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-7 bg-card">
-                  {grid.map((cell, idx) => {
-                    const iso = cell.iso
-                    const events = iso ? byDate.get(iso) ?? [] : []
-                    const isToday = iso ? isSameISODate(iso, todayISO) : false
-
-                    return (
+                    {upcoming[0] ? (
                       <button
-                        key={`${idx}-${iso ?? 'blank'}`}
                         type="button"
-                        disabled={!iso}
-                        onClick={() => iso && setOpenDayISO(iso)}
-                        className={cn(
-                          'min-h-[108px] border-b border-border/60 border-r border-border/60 text-left px-3 py-2 transition-colors',
-                          'hover:bg-accent/25 disabled:hover:bg-transparent disabled:cursor-default',
-                          idx % 7 === 6 && 'border-r-0',
-                          iso ? 'bg-card' : 'bg-card/60'
-                        )}
+                        onClick={() => setOpenDayISO(upcoming[0].dueDate)}
+                        className="mt-4 flex w-full items-center gap-3 text-left"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <div
-                            className={cn(
-                              'text-xs font-semibold',
-                              isToday
-                                ? 'text-primary'
-                                : iso
-                                  ? 'text-foreground'
-                                  : 'text-muted-foreground'
-                            )}
-                          >
-                            {cell.day ?? ''}
+                        <div className="overflow-hidden rounded-lg border border-[#dfe4ea] bg-white shadow-sm">
+                          <div className="bg-primary px-3 py-1 text-center text-[0.62rem] font-bold uppercase tracking-[0.12em] text-primary-foreground">
+                            {parseISODate(
+                              upcoming[0].dueDate,
+                            )?.toLocaleDateString(undefined, {
+                              month: 'short',
+                            }) ?? 'Date'}
                           </div>
-                          {events.length > 0 && (
-                            <div className="text-[10px] text-muted-foreground">
-                              {events.length} item{events.length === 1 ? '' : 's'}
-                            </div>
+                          <div className="px-3 py-2 text-center text-2xl font-semibold leading-none text-foreground">
+                            {parseISODate(upcoming[0].dueDate)?.getDate() ??
+                              '—'}
+                          </div>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-foreground">
+                            {upcoming[0].assignmentName?.trim() || 'Assessment'}
+                          </div>
+                          <div className="mt-1 truncate text-sm text-muted-foreground">
+                            {upcoming[0].courseName}
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-primary">
+                            {formatDayLabel(upcoming[0].dueDate).replace(
+                              /, \d{4}$/,
+                              '',
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ) : (
+                      <div className="mt-4 rounded-xl border border-[#dfe4ea] bg-[#f7f9fb] p-4 text-sm text-muted-foreground">
+                        No upcoming assessments.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t border-[#e5e9ee] pt-5">
+                    <div className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      This week
+                    </div>
+                    <div className="mt-4 flex items-center gap-4">
+                      <div className="text-5xl font-semibold leading-none text-primary">
+                        {thisWeekCount}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-foreground">
+                          Upcoming items
+                        </div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          {formatRangeLabel(todayISO, thisWeekEndISO).replace(
+                            /, \d{4}/g,
+                            '',
                           )}
                         </div>
-
-                        {events.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            {events.slice(0, 2).map((e) => {
-                              const done = isCompletedAssessment(e)
-                              return (
-                                <div
-                                  key={String(e._id)}
-                                  className={cn(
-                                    'rounded-md border px-2 py-1 text-xs leading-tight',
-                                    done
-                                      ? 'bg-primary/10 border-primary/20 text-foreground'
-                                      : 'bg-muted/40 border-border text-foreground'
-                                  )}
-                                >
-                                  <div className="flex items-start gap-1">
-                                    <Dot className="h-4 w-4 -ml-1 text-muted-foreground" />
-                                    <div className="min-w-0">
-                                      <div className="truncate font-medium">
-                                        {e.assignmentName?.trim() || 'Assessment'}
-                                      </div>
-                                      <div className="truncate text-muted-foreground">
-                                        {e.courseName}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )
-                            })}
-                            {events.length > 2 && (
-                              <div className="text-[10px] text-muted-foreground">
-                                +{events.length - 2} more
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              </Card>
-            </div>
-
-            <aside className="self-start lg:sticky lg:top-6">
-              <Card className="border-border">
-                <CardContent className="p-4 space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                        Upcoming
                       </div>
-                      <div className="text-lg font-semibold text-foreground">
-                        Next 30 days
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {activeCourseLabel} · {formatRangeLabel(todayISO, upcomingEndISO)}
-                      </div>
-                    </div>
-                    <div className="text-sm font-semibold tabular-nums text-muted-foreground">
-                      {upcoming.length}
                     </div>
                   </div>
 
-                  <div className="space-y-3 max-h-[calc(100vh-140px)] overflow-auto pr-1">
-                    {upcoming.length === 0 ? (
-                      <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-                        No upcoming assessments in the next 30 days.
+                  <div className="border-t border-[#e5e9ee] pt-5">
+                    <div className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      Open tasks
+                    </div>
+                    <div className="mt-4 flex items-center gap-4">
+                      <div className="text-5xl font-semibold leading-none text-foreground">
+                        {upcoming.length}
                       </div>
-                    ) : (
-                      upcomingDates.map((dateISO) => {
-                        const items = upcomingByDate.get(dateISO) ?? []
-                        return (
-                          <div key={dateISO} className="space-y-2">
-                            <button
-                              type="button"
-                              onClick={() => setOpenDayISO(dateISO)}
-                              className="w-full flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-accent/25 transition-colors"
-                            >
-                              <div className="text-xs font-semibold text-foreground">
-                                {dateISO === todayISO ? 'Today' : formatSidebarDayLabel(dateISO)}
-                              </div>
-                              <div className="text-xs text-muted-foreground tabular-nums">
-                                {items.length}
-                              </div>
-                            </button>
+                      <div>
+                        <div className="text-sm font-medium text-foreground">
+                          Pending tasks
+                        </div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          All courses
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-                            <div className="space-y-2">
-                              {items.map((e) => {
-                                const assignment = e.assignmentName?.trim() || 'Assessment'
-                                const weight =
-                                  (e.weightInput ?? '').trim().length > 0
-                                    ? (e.weightInput ?? '').trim()
-                                    : null
-
-                                return (
-                                  <div
-                                    key={String(e._id)}
-                                    className="rounded-lg border border-border bg-card px-3 py-2"
-                                  >
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="min-w-0">
-                                        <div className="truncate font-medium text-foreground">
-                                          {assignment}
-                                        </div>
-                                        <div className="truncate text-xs text-muted-foreground">
-                                          {e.courseName}
-                                          {weight && (
-                                            <span className="ml-2 inline-flex items-center rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[10px] text-muted-foreground">
-                                              {weight}%
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      {e.courseId && (
-                                        <Button variant="outline" size="sm" asChild>
-                                          <Link
-                                            to="/grade-calculator/$courseId"
-                                            params={{ courseId: e.courseId }}
-                                          >
-                                            Open
-                                          </Link>
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )
-                      })
-                    )}
+                  <div className="border-t border-[#e5e9ee] pt-5">
+                    <div className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      Upcoming events
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      {upcoming.length === 0 ? (
+                        <div className="rounded-xl border border-[#dfe4ea] bg-[#f7f9fb] p-4 text-sm text-muted-foreground">
+                          No upcoming assessments in the next 30 days.
+                        </div>
+                      ) : (
+                        upcoming.slice(0, 4).map((item) => (
+                          <button
+                            key={String(item._id)}
+                            type="button"
+                            onClick={() => setOpenDayISO(item.dueDate)}
+                            className="flex w-full items-start gap-3 text-left"
+                          >
+                            <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium text-foreground">
+                                {item.assignmentName?.trim() || 'Assessment'}
+                              </span>
+                              <span className="mt-1 block truncate text-sm text-muted-foreground">
+                                {item.courseName}
+                              </span>
+                            </span>
+                            <span className="shrink-0 text-sm text-muted-foreground">
+                              {parseISODate(item.dueDate)?.toLocaleDateString(
+                                undefined,
+                                {
+                                  month: 'short',
+                                  day: 'numeric',
+                                },
+                              ) ?? item.dueDate}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </aside>
+
+            <Card className="overflow-hidden rounded-2xl border-[#dfe4ea] bg-white py-0 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+              <CardContent className="p-0">
+                <div className="px-6 py-6">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                        Semester Calendar
+                      </h2>
+                      <span className="hidden text-sm text-muted-foreground sm:inline">
+                        {currentMonthCount} item
+                        {currentMonthCount === 1 ? '' : 's'}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Select
+                        value={String(monthCursor.getMonth())}
+                        onValueChange={(value) => {
+                          const nextMonth = Number(value)
+                          if (Number.isFinite(nextMonth)) {
+                            setMonthCursor(
+                              (d) => new Date(d.getFullYear(), nextMonth, 1),
+                            )
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-11 w-48 rounded-xl border-[#dfe4ea] bg-white text-base">
+                          <SelectValue
+                            placeholder={formatMonthLabel(monthCursor)}
+                          />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          {monthOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-11 w-11 rounded-xl border-[#dfe4ea]"
+                        onClick={() =>
+                          setMonthCursor(
+                            (d) =>
+                              new Date(d.getFullYear(), d.getMonth() - 1, 1),
+                          )
+                        }
+                        aria-label="Previous month"
+                        title="Previous month"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-11 w-11 rounded-xl border-[#dfe4ea]"
+                        onClick={() =>
+                          setMonthCursor(
+                            (d) =>
+                              new Date(d.getFullYear(), d.getMonth() + 1, 1),
+                          )
+                        }
+                        aria-label="Next month"
+                        title="Next month"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="h-11 rounded-xl border-[#dfe4ea] px-6 text-base"
+                        onClick={() => {
+                          const now = new Date()
+                          setMonthCursor(
+                            new Date(now.getFullYear(), now.getMonth(), 1),
+                          )
+                        }}
+                        aria-label="Jump to current month"
+                        title="Today"
+                      >
+                        Today
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mt-7 overflow-x-auto">
+                    <div className="min-w-[46rem] overflow-hidden rounded-xl border border-[#dfe4ea] bg-white">
+                      <div className="grid grid-cols-7 border-b border-[#e5e9ee] bg-white">
+                        {weekDays.map((day) => (
+                          <div
+                            key={day}
+                            className="px-4 py-3 text-center text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                          >
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="grid grid-cols-7 bg-white">
+                        {grid.map((cell, idx) => {
+                          const iso = cell.iso
+                          const events = iso ? (byDate.get(iso) ?? []) : []
+                          const isToday = iso
+                            ? isSameISODate(iso, todayISO)
+                            : false
+                          const isMuted =
+                            iso !== null &&
+                            parseISODate(iso)?.getMonth() !==
+                              monthCursor.getMonth()
+
+                          return (
+                            <button
+                              key={`${idx}-${iso ?? 'blank'}`}
+                              type="button"
+                              disabled={!iso}
+                              onClick={() => iso && setOpenDayISO(iso)}
+                              className={cn(
+                                'min-h-[clamp(6.6rem,9.6vh,7.8rem)] border-b border-r border-[#e5e9ee] px-4 py-3 text-left transition-colors',
+                                'hover:bg-[#f7f9fb] disabled:cursor-default disabled:hover:bg-white',
+                                idx % 7 === 6 && 'border-r-0',
+                                'bg-white',
+                              )}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={cn(
+                                    'flex h-6 w-6 items-center justify-center rounded-full text-sm font-medium',
+                                    isToday
+                                      ? 'bg-primary text-primary-foreground'
+                                      : isMuted
+                                        ? 'text-muted-foreground/55'
+                                        : 'text-foreground',
+                                  )}
+                                >
+                                  {cell.day ?? ''}
+                                </div>
+                              </div>
+
+                              {events.length > 0 && (
+                                <div className="mt-2 space-y-1">
+                                  {events.slice(0, 2).map((event) => (
+                                    <div
+                                      key={String(event._id)}
+                                      className="rounded-md bg-[#eaf2ff] px-2 py-1 text-xs leading-tight"
+                                    >
+                                      <div className="truncate font-semibold text-primary">
+                                        {event.assignmentName?.trim() ||
+                                          'Assessment'}
+                                      </div>
+                                      <div className="mt-0.5 truncate text-muted-foreground">
+                                        {event.courseName}
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {events.length > 2 && (
+                                    <div className="text-[0.68rem] font-medium text-muted-foreground">
+                                      +{events.length - 2} more
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    All times shown in your local time.
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </main>
@@ -530,7 +573,10 @@ function CalendarPage() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
           onMouseDown={() => setOpenDayISO(null)}
         >
-          <div className="w-full max-w-lg" onMouseDown={(e) => e.stopPropagation()}>
+          <div
+            className="w-full max-w-lg"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <Card className="border-border">
               <CardContent className="p-5 space-y-4">
                 <div className="flex items-start justify-between gap-3">
@@ -547,7 +593,11 @@ function CalendarPage() {
                       })()}
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setOpenDayISO(null)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setOpenDayISO(null)}
+                  >
                     Close
                   </Button>
                 </div>
@@ -555,7 +605,8 @@ function CalendarPage() {
                 <div className="space-y-2">
                   {(byDate.get(openDayISO) ?? []).length === 0 ? (
                     <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-                      Add a date to an assessment in the Grade Calculator to see it here.
+                      Add a date to an assessment in the Grade Calculator to see
+                      it here.
                     </div>
                   ) : (
                     (byDate.get(openDayISO) ?? []).map((e) => {
