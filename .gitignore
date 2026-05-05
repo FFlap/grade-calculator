@@ -67,3 +67,4 @@ output/playwright
 count.txt
 .eslintcache
 .cache
+.vercel
