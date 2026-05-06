@@ -85,6 +85,7 @@ export function GPACalculator() {
   )
   const [isEditingScale, setIsEditingScale] = useState(false)
   const [result, setResult] = useState<GPAResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handleUpdateCourse = useCallback(
     (id: string, field: keyof CourseEntry, value: string) => {
@@ -94,6 +95,7 @@ export function GPACalculator() {
         )
       )
       setResult(null)
+      setError(null)
     },
     []
   )
@@ -101,10 +103,12 @@ export function GPACalculator() {
   const handleDeleteCourse = useCallback((id: string) => {
     setCourses((prev) => prev.filter((course) => course.id !== id))
     setResult(null)
+    setError(null)
   }, [])
 
   const handleAddCourse = useCallback(() => {
     setCourses((prev) => [...prev, createEmptyCourse()])
+    setError(null)
   }, [])
 
   const handleCalculate = () => {
@@ -112,7 +116,8 @@ export function GPACalculator() {
     let totalCredits = 0
 
     for (const course of courses) {
-      const credits = parseFloat(course.credits)
+      const creditsInput = course.credits.trim()
+      const credits = creditsInput === '' ? 3 : parseFloat(creditsInput)
       const gradePoints = gpaScale.find(
         (entry) => entry.letter === course.grade
       )?.points
@@ -125,9 +130,11 @@ export function GPACalculator() {
 
     if (totalCredits === 0) {
       setResult(null)
+      setError('Select a letter grade for at least one course.')
       return
     }
 
+    setError(null)
     setResult({
       gpa: totalPoints / totalCredits,
       totalCredits,
@@ -138,6 +145,7 @@ export function GPACalculator() {
   const handleReset = () => {
     setCourses([createEmptyCourse(), createEmptyCourse(), createEmptyCourse()])
     setResult(null)
+    setError(null)
   }
 
   const handleSaveScale = () => {
@@ -153,12 +161,14 @@ export function GPACalculator() {
     )
     setIsEditingScale(false)
     setResult(null)
+    setError(null)
   }
 
   const handleResetScale = () => {
     setGpaScale(DEFAULT_GPA_SCALE)
     setScaleDraft(createScaleDraft(DEFAULT_GPA_SCALE))
     setResult(null)
+    setError(null)
   }
 
   const isDefaultScale = gpaScale.every(
@@ -276,6 +286,12 @@ export function GPACalculator() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive">
+              {error}
             </div>
           )}
 
