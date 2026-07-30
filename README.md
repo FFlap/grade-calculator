@@ -1,4 +1,6 @@
-<img src="public/logo512.png" alt="Grade Tracker logo" width="128" />
+<p align="center">
+  <img src="public/logo-with-bg.png" alt="Grade Tracker logo" width="128" />
+</p>
 
 # Grade Tracker
 
