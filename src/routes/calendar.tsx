@@ -225,7 +225,7 @@ function UpcomingSidebar({
 
   return (
     <aside className="space-y-4 sm:space-y-5">
-      <Card className="overflow-hidden rounded-xl border-border/70 bg-card py-0 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:rounded-2xl">
+      <Card className="overflow-hidden rounded-xl border-border/70 bg-card py-0 shadow-[0_1px_2px_var(--shadow-tint)] sm:rounded-2xl">
         <CardContent className="space-y-4 p-4 sm:space-y-6 sm:p-6">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
@@ -249,7 +249,7 @@ function UpcomingSidebar({
           <UpcomingStat
             label="This week"
             value={thisWeekCount}
-            valueClassName="text-primary"
+            valueClassName="text-accent-strong"
             title="Upcoming items"
             detail={formatRangeLabel(todayISO, thisWeekEndISO).replace(
               /, \d{4}/g,
@@ -291,7 +291,7 @@ function NextDeadlineButton({
           {deadlineDate?.toLocaleDateString(undefined, { month: 'short' }) ??
             'Date'}
         </div>
-        <div className="px-3 py-2 text-center text-2xl font-semibold leading-none text-foreground">
+        <div className="font-display px-3 py-2 text-center text-2xl font-semibold leading-none text-foreground">
           {deadlineDate?.getDate() ?? '—'}
         </div>
       </div>
@@ -302,7 +302,7 @@ function NextDeadlineButton({
         <div className="mt-1 truncate text-sm text-muted-foreground">
           {item.courseName}
         </div>
-        <div className="mt-1 text-sm font-medium text-primary">
+        <div className="mt-1 text-sm font-medium text-accent-strong">
           {formatDayLabel(item.dueDate).replace(/, \d{4}$/, '')}
         </div>
       </div>
@@ -331,7 +331,7 @@ function UpcomingStat({
       <div className="mt-3 flex items-center gap-3 sm:mt-4 sm:gap-4">
         <div
           className={cn(
-            'text-4xl font-semibold leading-none text-foreground sm:text-5xl',
+            'font-display text-4xl font-semibold leading-none text-foreground sm:text-5xl',
             valueClassName,
           )}
         >
@@ -435,7 +435,7 @@ function MonthBoard({
   onOpenDay: OpenDayHandler
 }) {
   return (
-    <Card className="overflow-hidden rounded-xl border-border/70 bg-card py-0 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:rounded-2xl">
+    <Card className="overflow-hidden rounded-xl border-border/70 bg-card py-0 shadow-[0_1px_2px_var(--shadow-tint)] sm:rounded-2xl">
       <CardContent className="p-0">
         <div className="p-4 sm:p-6">
           <MonthBoardHeader
@@ -615,7 +615,7 @@ function MonthDayButton({
               key={String(event._id)}
               className="hidden rounded-md bg-accent px-2 py-1 text-xs leading-tight sm:block"
             >
-              <div className="truncate font-semibold text-primary">
+              <div className="truncate font-semibold text-accent-strong">
                 {event.assignmentName?.trim() || 'Assessment'}
               </div>
               <div className="mt-0.5 truncate text-muted-foreground">
@@ -628,7 +628,7 @@ function MonthDayButton({
               +{events.length - 2} more
             </div>
           )}
-          <div className="text-[0.65rem] font-semibold text-primary sm:hidden">
+          <div className="text-[0.65rem] font-semibold text-accent-strong sm:hidden">
             {events.length}
           </div>
         </div>

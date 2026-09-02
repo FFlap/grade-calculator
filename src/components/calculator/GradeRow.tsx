@@ -85,7 +85,7 @@ export function GradeRow({
               {readableDate || 'Pick date'}
             </span>
           </button>
-          <CalendarDays className="pointer-events-none absolute left-1.5 top-1/2 size-3.5 -translate-y-1/2 text-primary lg:left-3 lg:size-4" />
+          <CalendarDays className="pointer-events-none absolute left-1.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/70 lg:left-3 lg:size-4" />
           <Input
             ref={dateInputRef}
             type="date"

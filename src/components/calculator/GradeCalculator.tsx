@@ -846,7 +846,7 @@ function GradeResultSummary({
           <div className="text-[0.64rem] leading-[1.35] font-semibold uppercase tracking-[0.1em] text-muted-foreground sm:text-[0.72rem] sm:tracking-[0.12em]">
             Current average
           </div>
-          <div className="mt-4 text-3xl font-semibold leading-none text-primary sm:mt-6 sm:text-4xl">
+          <div className="font-display mt-4 text-3xl font-semibold leading-none text-accent-strong sm:mt-6 sm:text-4xl">
             {formatPercent(currentAverage)}
           </div>
         </div>
@@ -855,7 +855,7 @@ function GradeResultSummary({
             <div className="text-[0.64rem] leading-[1.35] font-semibold uppercase tracking-[0.1em] text-muted-foreground sm:text-[0.72rem] sm:tracking-[0.12em]">
               Overall
             </div>
-            <div className="mt-4 text-3xl font-semibold leading-none text-foreground sm:mt-6 sm:text-4xl">
+            <div className="font-display mt-4 text-3xl font-semibold leading-none text-foreground sm:mt-6 sm:text-4xl">
               {formatPercent(projectedGrade)}
             </div>
           </div>
@@ -863,11 +863,11 @@ function GradeResultSummary({
       </div>
 
       {showRequiredOnRemaining && (
-        <div className="mt-3 rounded-md border border-primary/15 bg-primary/5 p-3.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] sm:rounded-md sm:p-4.5">
-          <div className="text-[0.64rem] leading-[1.35] font-semibold uppercase tracking-[0.1em] text-primary sm:text-[0.72rem] sm:tracking-[0.12em]">
+        <div className="mt-3 rounded-md border border-accent-strong/15 bg-accent-strong/5 p-3.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] sm:rounded-md sm:p-4.5">
+          <div className="text-[0.64rem] leading-[1.35] font-semibold uppercase tracking-[0.1em] text-accent-strong sm:text-[0.72rem] sm:tracking-[0.12em]">
             Required on remaining
           </div>
-          <div className="mt-2 text-4xl font-semibold leading-none text-primary sm:mt-2.5 sm:text-5xl">
+          <div className="font-display mt-2 text-4xl font-semibold leading-none text-accent-strong sm:mt-2.5 sm:text-5xl">
             {neededOnRemaining !== null && neededOnRemaining < 0
               ? '0%'
               : `${neededOnRemaining?.toFixed(1)}%`}
@@ -918,7 +918,7 @@ function AssignmentEntryPanel({
           <button
             type="button"
             onClick={onAddRow}
-            className="-ml-2.5 inline-flex h-8 items-center rounded-sm border border-transparent bg-transparent px-2.5 text-sm font-medium text-primary transition-colors hover:border-border/70 hover:bg-background hover:text-primary focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35"
+            className="-ml-2.5 inline-flex h-8 items-center rounded-sm border border-transparent bg-transparent px-2.5 text-sm font-medium text-accent-strong transition-colors hover:border-border/70 hover:bg-background hover:text-accent-strong focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35"
             aria-label="Add row"
           >
             + Add Assignment

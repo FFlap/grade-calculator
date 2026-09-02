@@ -298,14 +298,14 @@ function CourseSelectorInner({
             disabled={state.isWorking}
             aria-expanded={state.isManageOpen}
             aria-haspopup="menu"
-            className="h-9 min-w-[6.75rem] justify-center gap-1.5 text-sm text-primary"
+            className="h-9 min-w-[6.75rem] justify-center gap-1.5 text-sm text-accent-strong"
           >
             <MoreHorizontal className="size-4" />
             Manage
           </Button>
 
           {state.isManageOpen && (
-            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-[12.75rem] rounded-sm border border-border/80 bg-card p-1.5 shadow-[0_14px_30px_rgba(15,23,42,0.1)]">
+            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-[12.75rem] rounded-sm border border-border/80 bg-card p-1.5 shadow-[0_14px_30px_var(--shadow-tint-lift)]">
               <button
                 type="button"
                 onClick={() => {
@@ -314,7 +314,7 @@ function CourseSelectorInner({
                 }}
                 className="flex w-full items-center gap-2.5 rounded-sm p-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent/35"
               >
-                <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <span className="flex size-8 items-center justify-center rounded-full bg-accent-strong/10 text-accent-strong">
                   <Plus className="size-4" />
                 </span>
                 <span className="font-medium">Add course</span>
@@ -334,7 +334,7 @@ function CourseSelectorInner({
                 disabled={!selectedCourseId || !onRenameCourse || state.isWorking}
                 className="flex w-full items-center gap-2.5 rounded-sm p-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent/35 disabled:pointer-events-none disabled:opacity-45"
               >
-                <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <span className="flex size-8 items-center justify-center rounded-full bg-accent-strong/10 text-accent-strong">
                   <Pencil className="size-4" />
                 </span>
                 <span className="font-medium">Rename course</span>
@@ -360,7 +360,7 @@ function CourseSelectorInner({
             variant="outline"
             size="sm"
             disabled={state.isWorking}
-            className="h-9 min-w-[6.75rem] justify-center gap-1.5 text-sm text-primary"
+            className="h-9 min-w-[6.75rem] justify-center gap-1.5 text-sm text-accent-strong"
           >
             <MoreHorizontal className="size-4" />
             Manage

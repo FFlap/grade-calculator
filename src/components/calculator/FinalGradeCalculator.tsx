@@ -232,12 +232,12 @@ export function FinalGradeCalculator() {
             <div className="border-t border-border/70 pt-6">
               {result.isPossible ? (
                 <div className="space-y-4">
-                  <div className="rounded-sm border border-primary/15 bg-primary/5 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] lg:rounded-sm sm:p-5">
-                    <div className="text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-primary lg:text-[0.72rem] sm:tracking-[0.14em]">
+                  <div className="rounded-sm border border-accent-strong/15 bg-accent-strong/5 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] lg:rounded-sm sm:p-5">
+                    <div className="text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-accent-strong lg:text-[0.72rem] sm:tracking-[0.14em]">
                       Required score
                     </div>
                     <div className="mt-3 flex items-baseline gap-3">
-                      <span className="text-5xl font-semibold leading-none text-primary lg:text-6xl">
+                      <span className="font-display text-5xl font-semibold leading-none text-accent-strong lg:text-6xl">
                         {result.neededGrade.toFixed(1)}%
                       </span>
                     </div>
@@ -248,7 +248,7 @@ export function FinalGradeCalculator() {
                   <div className="text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-destructive lg:text-[0.72rem] sm:tracking-[0.14em]">
                     Not achievable
                   </div>
-                  <div className="mt-2 text-3xl font-semibold leading-none text-destructive sm:mt-3 lg:text-4xl">
+                  <div className="font-display mt-2 text-3xl font-semibold leading-none text-destructive sm:mt-3 lg:text-4xl">
                     {result.neededGrade.toFixed(1)}%
                   </div>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">
@@ -256,8 +256,8 @@ export function FinalGradeCalculator() {
                   </p>
                 </div>
               ) : (
-                <div className="rounded-sm border border-primary/15 bg-primary/5 p-4 lg:rounded-sm sm:p-5">
-                  <div className="text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-primary lg:text-[0.72rem] sm:tracking-[0.14em]">
+                <div className="rounded-sm border border-accent-strong/15 bg-accent-strong/5 p-4 lg:rounded-sm sm:p-5">
+                  <div className="text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-accent-strong lg:text-[0.72rem] sm:tracking-[0.14em]">
                     Already reached
                   </div>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">

@@ -1166,7 +1166,7 @@ function SummaryMetric({
         <span
           className={cn(
             'font-semibold leading-none',
-            primary ? 'text-4xl text-primary sm:text-5xl' : 'text-2xl text-foreground sm:text-3xl'
+            primary ? 'font-display text-4xl text-accent-strong sm:text-5xl' : 'text-2xl text-foreground sm:text-3xl'
           )}
         >
           {value}
@@ -1308,7 +1308,7 @@ function SemesterListCard({
           <Button
             variant="outline"
             onClick={onOpenAddSemester}
-            className="h-10 w-full border-dashed border-primary/25 bg-card text-sm text-primary hover:border-primary/45 hover:bg-primary/5"
+            className="h-10 w-full border-dashed border-accent-strong/25 bg-card text-sm text-accent-strong hover:border-accent-strong/45 hover:bg-accent-strong/5"
           >
             <Plus className="mr-2 size-4" />
             Add semester
@@ -1375,7 +1375,7 @@ function SemesterCard({
       onDrop={(event) => onCourseDrop(event, semesterId)}
       className={cn(
         'overflow-hidden rounded-xl border border-border/70 bg-card transition-colors',
-        dragOverSemesterId === semesterId && 'border-primary/30 bg-muted/45'
+        dragOverSemesterId === semesterId && 'border-accent-strong/30 bg-muted/45'
       )}
     >
       <button
@@ -1395,7 +1395,7 @@ function SemesterCard({
                 'rounded-full border px-2 py-0.5 text-xs font-semibold tracking-wide',
                 semester.status === 'completed'
                   ? 'border-border bg-muted text-muted-foreground'
-                  : 'border-primary/20 bg-primary/10 text-primary'
+                  : 'border-accent-strong/20 bg-accent-strong/10 text-accent-strong'
               )}
             >
               {statusLabel}
@@ -1498,7 +1498,7 @@ function UnassignedCoursesCard({
       onDrop={(event) => onCourseDrop(event, 'unassigned')}
       className={cn(
         'overflow-hidden rounded-xl border border-border/70 bg-card transition-colors',
-        dragOverSemesterId === 'unassigned' && 'border-primary/30 bg-muted/45'
+        dragOverSemesterId === 'unassigned' && 'border-accent-strong/30 bg-muted/45'
       )}
     >
       <div className="bg-muted/45 p-4">
@@ -1769,7 +1769,7 @@ function CourseRow({
         <span className="text-xs font-medium text-muted-foreground sm:hidden">
           Grade
         </span>
-        <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+        <span className="inline-flex rounded-full bg-accent-strong/10 px-2.5 py-1 text-xs font-semibold text-accent-strong">
           {percent === null || letter === null
             ? '—'
             : `${letter} (${Math.round(percent)}%)`}

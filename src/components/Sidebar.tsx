@@ -93,7 +93,7 @@ function SectionLabel({
   return (
     <div
       className={cn(
-        'px-3 pt-5 pb-2 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-sidebar-foreground/55',
+        'px-3 pt-5 pb-2 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground',
         compact && 'pt-2',
         collapsed && 'px-0 text-center'
       )}
@@ -124,8 +124,8 @@ export function Sidebar({
       'flex items-center gap-2 rounded-sm text-sm font-medium transition-[background-color,color,box-shadow,padding,gap] duration-300 ease-out',
       collapsed ? 'justify-center gap-0 px-0 py-2.5' : 'px-3 py-2',
       active
-        ? 'bg-muted/65 text-sidebar-foreground'
-        : 'text-muted-foreground hover:bg-sidebar-accent/65'
+        ? 'bg-primary text-primary-foreground [&>svg]:text-accent-on-ink'
+        : 'text-muted-foreground [&>svg]:text-muted-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground hover:[&>svg]:text-sidebar-foreground/80'
     )
 
   const collapsedTextClass = cn(
@@ -150,7 +150,7 @@ export function Sidebar({
         onClick={onToggleCollapsed}
         className={cn(
           'absolute top-7 right-0 z-50 -translate-y-1/2 translate-x-1/2',
-          'size-7 rounded-sm border border-border/80 bg-card shadow-[0_10px_22px_rgba(15,23,42,0.08)]',
+          'size-7 rounded-sm border border-border/80 bg-card shadow-[0_10px_22px_var(--shadow-tint-lift)]',
           'hover:bg-muted/70 text-sidebar-foreground/80 transition-colors'
         )}
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -172,7 +172,7 @@ export function Sidebar({
               'flex min-w-0 items-center gap-0 rounded-sm font-semibold text-sidebar-foreground transition-[background-color,color,padding,gap] duration-300 ease-out',
               collapsed
                 ? 'mx-auto h-12 w-12 justify-center gap-0 px-0 py-0'
-                : 'px-0 py-1.5 hover:bg-sidebar-accent/50'
+                : 'px-0 py-1.5 hover:bg-sidebar-accent'
             )}
             title="Grade Tracker"
           >
@@ -269,13 +269,13 @@ export function Sidebar({
           <SignedOut>
             <div
               className={cn(
-                'rounded-sm border border-sidebar-border/70 bg-sidebar-accent/70 transition-[height,padding,width] duration-300 ease-out',
-                collapsed ? collapsedAccountTileClass : 'p-3'
+                'transition-[height,padding,width] duration-300 ease-out',
+                collapsed ? collapsedAccountTileClass : 'pb-1'
               )}
             >
               <div
                 className={cn(
-                  'overflow-hidden text-xs leading-5 text-sidebar-foreground/80 transition-[max-height,opacity] duration-200 ease-out',
+                  'overflow-hidden px-3 text-xs leading-5 text-muted-foreground transition-[max-height,opacity] duration-200 ease-out',
                   collapsed ? 'max-h-0 opacity-0' : 'max-h-16 opacity-100'
                 )}
               >
@@ -379,8 +379,8 @@ export function MobileTopNav() {
                       className={cn(
                         'flex min-h-11 w-full items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-colors',
                         item.active
-                          ? 'bg-muted/65 text-sidebar-foreground'
-                          : 'text-muted-foreground hover:bg-sidebar-accent/65'
+                          ? 'bg-primary text-primary-foreground [&>svg]:text-accent-on-ink'
+                          : 'text-muted-foreground [&>svg]:text-muted-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                       )}
                     >
                       {content}
@@ -397,8 +397,8 @@ export function MobileTopNav() {
                   className={cn(
                     'flex min-h-11 w-full items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-colors',
                     item.active
-                      ? 'bg-muted/65 text-sidebar-foreground'
-                      : 'text-muted-foreground hover:bg-sidebar-accent/65'
+                      ? 'bg-primary text-primary-foreground [&>svg]:text-accent-on-ink'
+                      : 'text-muted-foreground [&>svg]:text-muted-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                   )}
                 >
                   {content}

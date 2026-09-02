@@ -18,7 +18,7 @@ export function SignInPrompt({
       <div className="mx-auto mb-5 flex size-24 items-center justify-center text-foreground sm:mb-6 sm:size-32">
         <Icon className="size-16 sm:size-24" strokeWidth={1.6} />
       </div>
-      <div className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+      <div className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
         {title}
       </div>
       <div className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">

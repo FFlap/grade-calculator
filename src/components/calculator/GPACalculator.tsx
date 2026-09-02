@@ -336,7 +336,7 @@ export function GPACalculator() {
     )
 
   const getGPAColor = (gpa: number) => {
-    if (gpa >= 3.7) return 'text-primary'
+    if (gpa >= 3.7) return 'text-accent-strong'
     if (gpa >= 3.0) return 'text-foreground'
     if (gpa >= 2.0) return 'text-muted-foreground'
     if (gpa >= 1.0) return 'text-muted-foreground'
@@ -411,11 +411,11 @@ export function GPACalculator() {
           {result && (
             <div className="border-t border-border/70 pt-6">
               <div className="space-y-3 sm:space-y-4">
-                <div className="rounded-sm border border-primary/15 bg-primary/5 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] lg:rounded-sm sm:p-5">
-                  <div className="text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-primary lg:text-[0.72rem] sm:tracking-[0.14em]">
+                <div className="rounded-sm border border-accent-strong/15 bg-accent-strong/5 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] lg:rounded-sm sm:p-5">
+                  <div className="text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-accent-strong lg:text-[0.72rem] sm:tracking-[0.14em]">
                     GPA
                   </div>
-                  <div className={`mt-2 text-5xl font-semibold leading-none sm:mt-3 lg:text-6xl ${getGPAColor(result.gpa)}`}>
+                  <div className={`font-display mt-2 text-5xl font-semibold leading-none sm:mt-3 lg:text-6xl ${getGPAColor(result.gpa)}`}>
                     {result.gpa.toFixed(2)}
                   </div>
                 </div>
@@ -425,7 +425,7 @@ export function GPACalculator() {
                     <div className="text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground lg:text-[0.72rem] sm:tracking-[0.12em]">
                       Credits
                     </div>
-                    <div className="mt-3 text-2xl font-semibold leading-none text-foreground sm:mt-4 lg:text-3xl">
+                    <div className="font-display mt-3 text-2xl font-semibold leading-none text-foreground sm:mt-4 lg:text-3xl">
                       {result.totalCredits}
                     </div>
                   </div>
@@ -433,7 +433,7 @@ export function GPACalculator() {
                     <div className="text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground lg:text-[0.72rem] sm:tracking-[0.12em]">
                       Points
                     </div>
-                    <div className="mt-3 text-2xl font-semibold leading-none text-foreground sm:mt-4 lg:text-3xl">
+                    <div className="font-display mt-3 text-2xl font-semibold leading-none text-foreground sm:mt-4 lg:text-3xl">
                       {result.totalPoints.toFixed(1)}
                     </div>
                   </div>
@@ -590,7 +590,7 @@ export function GPACalculator() {
             <button
               type="button"
               onClick={handleAddCourse}
-              className="-ml-2.5 inline-flex h-8 items-center rounded-sm border border-transparent bg-transparent px-2.5 text-sm font-medium text-primary transition-colors hover:border-border/70 hover:bg-background hover:text-primary focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35"
+              className="-ml-2.5 inline-flex h-8 items-center rounded-sm border border-transparent bg-transparent px-2.5 text-sm font-medium text-accent-strong transition-colors hover:border-border/70 hover:bg-background hover:text-accent-strong focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35"
               aria-label="Add course"
             >
               + Add Course
